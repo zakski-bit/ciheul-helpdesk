@@ -194,20 +194,21 @@ def generate_wbs_excel():
     for c in range(1, 7):
         ws.cell(row=summary_row, column=c).border = thick_bottom
 
-    # Duration formula (summing sub-tasks only: IDs with dot like 1.1, 1.2)
-    # Total work days calculation: 21 days
-    cell_dur = ws.cell(row=summary_row, column=7, value="=SUM(G6:G34)/2")
+    # Duration formula (summing the 8 main modules or all subtasks: 21.0 work days)
+    # Total work days calculation: 21.0 days
+    cell_dur = ws.cell(row=summary_row, column=7, value="=SUM(G6,G9,G13,G17,G21,G25,G29,G33)")
     cell_dur.font = font_bold_body
     cell_dur.fill = PatternFill(start_color="CBD5E1", end_color="CBD5E1", fill_type="solid")
     cell_dur.alignment = align_right
     cell_dur.number_format = "0.0"
     cell_dur.border = thick_bottom
 
-    # Weight formula (equals 100%)
-    cell_bobot = ws.cell(row=summary_row, column=8, value="100.0%")
+    # Weight formula (summing the 8 main modules = 100.0%)
+    cell_bobot = ws.cell(row=summary_row, column=8, value="=SUM(H6,H9,H13,H17,H21,H25,H29,H33)")
     cell_bobot.font = font_bold_body
     cell_bobot.fill = PatternFill(start_color="CBD5E1", end_color="CBD5E1", fill_type="solid")
     cell_bobot.alignment = align_right
+    cell_bobot.number_format = '0.0"%"'
     cell_bobot.border = thick_bottom
 
     ws.merge_cells(f"I{summary_row}:J{summary_row}")
@@ -218,7 +219,8 @@ def generate_wbs_excel():
     ws.cell(row=summary_row, column=10).border = thick_bottom
     sum_stat.border = thick_bottom
 
-    output_path = r"C:\Users\Dell 3490\.gemini\antigravity\scratch\ciheul-helpdesk\docs\wbs\wbs_helpdesk_system.xlsx"
+    import os
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wbs_helpdesk_system.xlsx")
     wb.save(output_path)
     print(f"WBS spreadsheet successfully generated at: {output_path}")
 

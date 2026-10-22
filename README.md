@@ -62,7 +62,7 @@ python backend/main.py
 
 ---
 
-### 3. Menjalankan Aplikasi Mobile (Flutter CS App)
+### 3. Menjalankan Aplikasi Mobile (Flutter CS App) & Distribusi APK
 
 Masuk ke folder `mobile-flutter`:
 ```bash
@@ -70,14 +70,29 @@ cd mobile-flutter
 flutter run
 ```
 
-Atau kompilasi file APK rilis:
+Atau kompilasi file APK rilis secara lokal:
 ```bash
 flutter build apk --release
 ```
 *File APK akan berada di: `mobile-flutter/build/app/outputs/flutter-apk/app-release.apk`.*
 
-> [!NOTE]
-> Jika Anda mengunggah repositori ini ke akun GitHub Anda, GitHub Actions akan secara otomatis meng-compile APK Android pada tab Actions tanpa perlu membebani laptop Anda.
+---
+
+### 4. Panduan Submission Git Remote & Unduhan APK Release
+
+1. **Menghubungkan ke Remote Git Penguji / Evaluator**:
+   Repositori lokal ini telah terinisialisasi secara bersih dengan riwayat commit rapi. Untuk mengunggah ke GitHub atau GitLab Anda:
+   ```bash
+   git remote add origin https://github.com/<username>/ciheul-helpdesk.git
+   git branch -M master
+   git push -u origin master
+   ```
+
+2. **Otomasi Build & Rilis APK Permanen (GitHub Actions)**:
+   - File workflow [`.github/workflows/build-apk.yml`](./.github/workflows/build-apk.yml) secara otomatis menjalankan kompilasi Java 17 + Flutter SDK di runner Linux cloud tanpa membebani laptop penguji.
+   - APK hasil build disimpan sebagai build artifact (durasi retensi 90 hari) dan otomatis diunggah ke **GitHub Releases** permanen:  
+     `https://github.com/<username>/ciheul-helpdesk/releases/latest/download/app-release.apk`
+   - **Keamanan Keystore Signing:** Untuk rilis produksi sesungguhnya, konfigurasikan GitHub Secrets (`RELEASE_KEYSTORE_BASE64`, `KEY_ALIAS`, `KEY_PASSWORD`, `STORE_PASSWORD`). Fallback signing key di workflow hanya diperuntukkan sebagai validator verifikasi build di sandbox CI agar proses verifikasi otomatis tetap berjalan mulus.
 
 ---
 

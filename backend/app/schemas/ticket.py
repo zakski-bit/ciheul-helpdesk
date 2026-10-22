@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from datetime import datetime
 from typing import Optional, List
 from .message import MessageResponse
@@ -42,6 +42,13 @@ class TicketResponse(BaseModel):
     agent_name: Optional[str] = None
     last_message: Optional[str] = None
     unread_count: Optional[int] = 0
+
+    @field_serializer("created_at", "updated_at")
+    def serialize_datetimes(self, dt: datetime, _info):
+        iso = dt.isoformat()
+        if not iso.endswith("Z") and "+" not in iso and "-" not in iso[-6:]:
+            return iso + "Z"
+        return iso
 
     class Config:
         from_attributes = True

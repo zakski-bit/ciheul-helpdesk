@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from datetime import datetime
 from typing import Optional
 
@@ -16,6 +16,13 @@ class MessageResponse(BaseModel):
     content: str
     is_read: bool
     created_at: datetime
+
+    @field_serializer("created_at")
+    def serialize_created_at(self, dt: datetime, _info):
+        iso = dt.isoformat()
+        if not iso.endswith("Z") and "+" not in iso and "-" not in iso[-6:]:
+            return iso + "Z"
+        return iso
 
     class Config:
         from_attributes = True

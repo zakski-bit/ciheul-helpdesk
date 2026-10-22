@@ -20,6 +20,17 @@ class Ticket {
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
+    DateTime parsed;
+    final rawDate = json['updated_at']?.toString();
+    if (rawDate != null && rawDate.isNotEmpty) {
+      final utcString = (!rawDate.endsWith('Z') && !RegExp(r'[+-]\d{2}:\d{2}$').hasMatch(rawDate))
+          ? '${rawDate}Z'
+          : rawDate;
+      parsed = DateTime.tryParse(utcString)?.toLocal() ?? DateTime.now();
+    } else {
+      parsed = DateTime.now();
+    }
+
     return Ticket(
       id: json['id'] ?? '',
       customerName: json['customer_name'] ?? 'Tamu',
@@ -28,7 +39,7 @@ class Ticket {
       category: json['category'] ?? 'GENERAL',
       status: json['status'] ?? 'BOT_ACTIVE',
       priority: json['priority'] ?? 'MEDIUM',
-      updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+      updatedAt: parsed,
     );
   }
 }

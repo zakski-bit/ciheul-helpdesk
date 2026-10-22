@@ -280,8 +280,18 @@
         });
     }
 
+    function parseUTCDate(dateStr) {
+        if (!dateStr) return new Date();
+        let s = String(dateStr);
+        if (!s.endsWith("Z") && !/[+-]\d{2}:\d{2}$/.test(s)) {
+            s += "Z";
+        }
+        return new Date(s);
+    }
+
     function getTimeAgo(dateStr) {
-        const diffMs = Date.now() - new Date(dateStr).getTime();
+        if (!dateStr) return "";
+        const diffMs = Math.max(0, Date.now() - parseUTCDate(dateStr).getTime());
         const mins = Math.floor(diffMs / 60000);
         if (mins < 1) return "now";
         if (mins < 60) return `${mins}m`;
@@ -303,6 +313,16 @@
                 renderActiveConversation();
                 connectRoomWebSocket(activeTicket.id);
                 loadCopilotAnalysis(activeTicket.id);
+
+                // Responsive mobile viewport support: switch view to active conversation
+                if (window.innerWidth < 768) {
+                    const inboxCol = document.getElementById("inbox-column");
+                    const convoCol = document.getElementById("conversation-column");
+                    if (inboxCol && convoCol) {
+                        inboxCol.classList.add("hidden");
+                        convoCol.classList.remove("hidden");
+                    }
+                }
             }
         } catch (e) {
             console.error(e);
@@ -374,7 +394,7 @@
             ? "bg-[#f3f4f6] text-[#111827] rounded-2xl rounded-bl-sm"
             : "bg-[#0284c7] text-white rounded-2xl rounded-br-sm";
 
-        const time = timeStr ? new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const time = timeStr ? parseUTCDate(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         msgDiv.className = `flex ${align}`;
         msgDiv.innerHTML = `
@@ -607,7 +627,7 @@
         document.getElementById("dt-status").innerText = activeTicket.status || "-";
         document.getElementById("dt-category").innerText = activeTicket.category || "-";
         document.getElementById("dt-agent-name").innerText = activeTicket.agent_name || "Belum ditugaskan";
-        document.getElementById("dt-created-at").innerText = new Date(activeTicket.created_at).toLocaleString();
+        document.getElementById("dt-created-at").innerText = parseUTCDate(activeTicket.created_at).toLocaleString();
 
         detailsDrawer.classList.remove("hidden");
     });
@@ -640,6 +660,37 @@
             currentFilter = btn.dataset.status;
             renderConversationList();
         });
+    });
+
+    // 13. Mobile Responsive Navigation Handlers
+    const btnBackToInbox = document.getElementById("btn-back-to-inbox");
+    if (btnBackToInbox) {
+        btnBackToInbox.addEventListener("click", () => {
+            const inboxCol = document.getElementById("inbox-column");
+            const convoCol = document.getElementById("conversation-column");
+            if (inboxCol && convoCol) {
+                convoCol.classList.add("hidden");
+                inboxCol.classList.remove("hidden");
+            }
+        });
+    }
+
+    window.addEventListener("resize", () => {
+        const inboxCol = document.getElementById("inbox-column");
+        const convoCol = document.getElementById("conversation-column");
+        if (!inboxCol || !convoCol) return;
+        if (window.innerWidth >= 768) {
+            inboxCol.classList.remove("hidden");
+            convoCol.classList.remove("hidden");
+        } else {
+            if (activeTicket) {
+                inboxCol.classList.add("hidden");
+                convoCol.classList.remove("hidden");
+            } else {
+                inboxCol.classList.remove("hidden");
+                convoCol.classList.add("hidden");
+            }
+        }
     });
 
     function escapeHtml(str) {

@@ -93,11 +93,29 @@
         win.classList.remove("ch-open");
     });
 
+    const renderedMessageIds = new Set();
+
+    function parseUTCDate(dateStr) {
+        if (!dateStr) return new Date();
+        let s = String(dateStr);
+        if (!s.endsWith("Z") && !/[+-]\d{2}:\d{2}$/.test(s)) {
+            s += "Z";
+        }
+        return new Date(s);
+    }
+
     function scrollToBottom() {
         feed.scrollTop = feed.scrollHeight;
     }
 
-    function appendMessage(senderType, senderName, content, timeStr) {
+    function appendMessage(senderType, senderName, content, timeStr, messageId) {
+        if (messageId) {
+            if (renderedMessageIds.has(messageId)) {
+                return; // Deduplicate: already rendered
+            }
+            renderedMessageIds.add(messageId);
+        }
+
         const msgDiv = document.createElement("div");
         let typeClass = "ch-msg-customer";
         if (senderType === "BOT") typeClass = "ch-msg-bot";
@@ -105,8 +123,11 @@
         else if (senderType === "SYSTEM") typeClass = "ch-msg-system";
 
         msgDiv.className = `ch-msg ${typeClass}`;
+        if (messageId) {
+            msgDiv.dataset.messageId = messageId;
+        }
         
-        const time = timeStr ? new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const time = timeStr ? parseUTCDate(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         if (senderType === "SYSTEM") {
             msgDiv.innerText = content;
@@ -137,7 +158,7 @@
                     feed.innerHTML = "";
                     if (ticket.messages && ticket.messages.length > 0) {
                         ticket.messages.forEach(m => {
-                            appendMessage(m.sender_type, m.sender_name, m.content, m.created_at);
+                            appendMessage(m.sender_type, m.sender_name, m.content, m.created_at, m.id);
                             lastMessageId = m.id;
                         });
                     }
@@ -216,11 +237,11 @@
             try {
                 const data = JSON.parse(event.data);
                 if (data.event === "new_message") {
-                    appendMessage(data.sender_type, data.sender_name, data.content, data.created_at);
+                    appendMessage(data.sender_type, data.sender_name, data.content, data.created_at, data.id);
                     lastMessageId = data.id;
                 } else if (data.event === "sync_result" && data.messages) {
                     data.messages.forEach(m => {
-                        appendMessage(m.sender_type, m.sender_name, m.content, m.created_at);
+                        appendMessage(m.sender_type, m.sender_name, m.content, m.created_at, m.id);
                         lastMessageId = m.id;
                     });
                 } else if (data.event === "ticket_escalated") {
@@ -252,10 +273,16 @@
     async function sendMessage() {
         const text = input.value.trim();
         if (!text) return;
-        input.value = "";
+
+        // Client-side length validation: prevent silent truncation or 422 failure
+        if (text.length > 3000) {
+            appendMessage("SYSTEM", "Sistem", `Pesan melebihi batas maksimum 3.000 karakter (panjang saat ini: ${text.length} karakter). Mohon perpendek pesan Anda.`);
+            return;
+        }
 
         if (!activeTicketId) {
-            appendMessage("CUSTOMER", "Anda", text);
+            sendBtn.disabled = true;
+            input.disabled = true;
             try {
                 const res = await fetch(`${API_BASE}/api/v1/tickets`, {
                     method: "POST",
@@ -270,17 +297,41 @@
                     const ticket = await res.json();
                     activeTicketId = ticket.id;
                     localStorage.setItem("ciheul_ticket_id", activeTicketId);
+                    input.value = "";
                     
+                    if (ticket.messages && ticket.messages.length > 0) {
+                        const firstMsg = ticket.messages[0];
+                        appendMessage(firstMsg.sender_type, firstMsg.sender_name, firstMsg.content, firstMsg.created_at, firstMsg.id);
+                        lastMessageId = firstMsg.id;
+                    } else {
+                        appendMessage("CUSTOMER", "Anda", text);
+                    }
+
                     if (ticket.messages && ticket.messages.length > 1) {
                         const botMsg = ticket.messages[1];
-                        appendMessage(botMsg.sender_type, botMsg.sender_name, botMsg.content, botMsg.created_at);
+                        appendMessage(botMsg.sender_type, botMsg.sender_name, botMsg.content, botMsg.created_at, botMsg.id);
                         lastMessageId = botMsg.id;
                     }
                     updateStatusUI(ticket.status);
                     connectWebSocket(activeTicketId);
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    let errMsg = "Gagal membuat tiket kendala.";
+                    if (errData.detail) {
+                        if (Array.isArray(errData.detail)) {
+                            errMsg = errData.detail.map(d => d.msg || JSON.stringify(d)).join(", ");
+                        } else {
+                            errMsg = String(errData.detail);
+                        }
+                    }
+                    appendMessage("SYSTEM", "Sistem", errMsg);
                 }
             } catch (err) {
                 appendMessage("SYSTEM", "Sistem", "Gagal terhubung ke server. Silakan coba lagi.");
+            } finally {
+                sendBtn.disabled = false;
+                input.disabled = false;
+                input.focus();
             }
         } else {
             if (socket && socket.readyState === WebSocket.OPEN) {
@@ -288,6 +339,7 @@
                     event: "send_message",
                     content: text
                 }));
+                input.value = "";
             } else {
                 appendMessage("SYSTEM", "Sistem", "Menghubungkan kembali ke server...");
             }

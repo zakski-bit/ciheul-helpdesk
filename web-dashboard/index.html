@@ -35,7 +35,7 @@
 <body class="bg-[#f9fafb] text-[#111827] h-screen flex overflow-hidden select-none">
 
     <!-- FAR-LEFT NAVIGATION BAR (56px) -->
-    <aside class="w-14 bg-white border-r border-[#e5e7eb] flex flex-col items-center py-4 justify-between z-20 flex-shrink-0">
+    <aside class="hidden md:flex w-14 bg-white border-r border-[#e5e7eb] flex-col items-center py-4 justify-between z-20 flex-shrink-0">
         <div class="flex flex-col items-center gap-6">
             <!-- Ciheul Official Logo -->
             <a href="/dashboard/index.html" title="CIHEUL Helpdesk">
@@ -71,7 +71,7 @@
     </aside>
 
     <!-- COLUMN 1: YOUR INBOX (Conversation List) -->
-    <section class="w-80 bg-white border-r border-[#e5e7eb] flex flex-col flex-shrink-0">
+    <section id="inbox-column" class="w-full md:w-80 bg-white border-r border-[#e5e7eb] flex flex-col flex-shrink-0">
         <!-- Inbox Header -->
         <div class="px-4 py-3.5 border-b border-[#e5e7eb] flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -101,11 +101,14 @@
     </section>
 
     <!-- COLUMN 2: ACTIVE CONVERSATION -->
-    <section class="flex-1 bg-white border-r border-[#e5e7eb] flex flex-col min-w-0">
+    <section id="conversation-column" class="hidden md:flex flex-1 bg-white border-r border-[#e5e7eb] flex-col min-w-0">
         <!-- Conversation Header -->
-        <div id="convo-header" class="h-14 px-6 border-b border-[#e5e7eb] flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <h3 id="convo-customer-name" class="font-bold text-sm text-[#111827]">Pilih percakapan</h3>
+        <div id="convo-header" class="h-14 px-4 md:px-6 border-b border-[#e5e7eb] flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <button id="btn-back-to-inbox" class="md:hidden p-1 text-[#6b7280] hover:text-[#111827] rounded-lg transition" title="Kembali ke daftar tiket">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h3 id="convo-customer-name" class="font-bold text-sm text-[#111827] truncate max-w-[150px] md:max-w-none">Pilih percakapan</h3>
                 <span id="convo-status-pill" class="hidden px-2.5 py-0.5 rounded-full text-[11px] font-semibold"></span>
             </div>
             <div id="convo-actions" class="hidden flex items-center gap-2">
@@ -158,7 +161,7 @@
     </section>
 
     <!-- COLUMN 3: COPILOT 2 ASSISTANT PANEL (Intercom Copilot Style) -->
-    <aside class="w-96 bg-[#fcfcfd] flex flex-col flex-shrink-0">
+    <aside id="copilot-column" class="hidden xl:flex w-80 2xl:w-96 bg-[#fcfcfd] flex-col flex-shrink-0">
         <!-- Copilot Header -->
         <div class="h-14 px-5 border-b border-[#e5e7eb] flex items-center justify-between bg-white">
             <div class="flex items-center gap-2">

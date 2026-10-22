@@ -19,6 +19,15 @@ from app.websockets.connection_manager import ws_manager
 logger = logging.getLogger("helpdesk.ws")
 router = APIRouter(tags=["WebSockets"])
 
+def format_utc_iso(dt: Optional[datetime]) -> str:
+    """Format datetime as strict UTC ISO-8601 string with Z suffix so clients parse correctly."""
+    if not dt:
+        return ""
+    iso = dt.isoformat()
+    if not iso.endswith("Z") and "+" not in iso and "-" not in iso[-6:]:
+        return iso + "Z"
+    return iso
+
 @router.websocket("/ws/ticket/{ticket_id}")
 async def websocket_ticket_room(
     websocket: WebSocket, 
@@ -121,7 +130,7 @@ async def websocket_ticket_room(
             if event_type == "ping":
                 await websocket.send_text(json.dumps({
                     "event": "pong",
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": format_utc_iso(datetime.utcnow())
                 }))
                 continue
 
@@ -153,7 +162,7 @@ async def websocket_ticket_room(
                             "sender_type": m.sender_type,
                             "sender_name": m.sender_name,
                             "content": m.content,
-                            "created_at": m.created_at.isoformat()
+                            "created_at": format_utc_iso(m.created_at)
                         } for m in missed
                     ]
                 }))
@@ -205,7 +214,7 @@ async def websocket_ticket_room(
                     "sender_type": verified_sender_type,
                     "sender_name": verified_sender_name,
                     "content": new_msg.content,
-                    "created_at": new_msg.created_at.isoformat()
+                    "created_at": format_utc_iso(new_msg.created_at)
                 }
                 await ws_manager.broadcast_to_ticket(ticket_id, msg_payload)
 
@@ -241,7 +250,7 @@ async def websocket_ticket_room(
                         "sender_type": "BOT",
                         "sender_name": "Asisten AI CIHEUL",
                         "content": bot_msg.content,
-                        "created_at": bot_msg.created_at.isoformat()
+                        "created_at": format_utc_iso(bot_msg.created_at)
                     }
                     await ws_manager.broadcast_to_ticket(ticket_id, bot_payload)
 
@@ -333,7 +342,7 @@ async def websocket_agents_channel(
                 if data.get("event") == "ping":
                     await websocket.send_text(json.dumps({
                         "event": "pong",
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": format_utc_iso(datetime.utcnow())
                     }))
             except Exception:
                 pass
