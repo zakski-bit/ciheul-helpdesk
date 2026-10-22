@@ -1,7 +1,9 @@
 import json
+import time
+import asyncio
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, status
 from sqlalchemy.orm import Session
 
@@ -30,6 +32,19 @@ async def websocket_ticket_room(
         if not ticket:
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
+
+        # Support in-band first-message authentication if no query parameters provided
+        if not token and not session_token:
+            await websocket.accept()
+            try:
+                auth_raw = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
+                auth_data = json.loads(auth_raw)
+                if auth_data.get("event") == "auth":
+                    token = auth_data.get("token")
+                    session_token = auth_data.get("session_token")
+            except Exception:
+                await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+                return
 
         verified_sender_type: str = ""
         verified_sender_name: str = ""
@@ -63,8 +78,22 @@ async def websocket_ticket_room(
         # Connection verified - register to room
         await ws_manager.connect_to_ticket(websocket, ticket_id)
 
+        # Sliding window rate limiting: max 5 messages per 3 seconds per connection
+        message_timestamps: List[float] = []
+        MAX_MESSAGES_PER_WINDOW = 5
+        WINDOW_SECONDS = 3.0
+        MAX_FRAME_SIZE = 65536  # 64 KB
+        MAX_CONTENT_LENGTH = 3000
+
         while True:
             raw_data = await websocket.receive_text()
+            if len(raw_data) > MAX_FRAME_SIZE:
+                await websocket.send_text(json.dumps({
+                    "event": "error",
+                    "message": "Payload melebihi batas maksimum 64 KB"
+                }))
+                continue
+
             try:
                 msg_data = json.loads(raw_data)
             except json.JSONDecodeError:
@@ -116,8 +145,25 @@ async def websocket_ticket_room(
 
             # Chat Message sent (Strict Anti-Spoofing: sender_type & sender_name from server session only)
             elif event_type == "send_message":
+                # Rate Limiting check
+                now = time.time()
+                message_timestamps = [t for t in message_timestamps if now - t < WINDOW_SECONDS]
+                if len(message_timestamps) >= MAX_MESSAGES_PER_WINDOW:
+                    await websocket.send_text(json.dumps({
+                        "event": "error",
+                        "message": "Batas pengiriman pesan terlampaui. Mohon tunggu sejenak."
+                    }))
+                    continue
+                message_timestamps.append(now)
+
                 content = str(msg_data.get("content", "")).strip()
                 if not content:
+                    continue
+                if len(content) > MAX_CONTENT_LENGTH:
+                    await websocket.send_text(json.dumps({
+                        "event": "error",
+                        "message": f"Pesan melebihi batas maksimum {MAX_CONTENT_LENGTH} karakter"
+                    }))
                     continue
 
                 # Save incoming message to DB
@@ -210,6 +256,18 @@ async def websocket_agents_channel(
     token: Optional[str] = Query(None)
 ):
     """Global broadcast channel for CS Agents on Web Dashboard & Flutter Mobile App (Protected with JWT)."""
+    if not token:
+        # Support in-band first-message authentication handshake
+        await websocket.accept()
+        try:
+            auth_raw = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
+            auth_data = json.loads(auth_raw)
+            if auth_data.get("event") == "auth":
+                token = auth_data.get("token")
+        except Exception:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+
     if not token:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return

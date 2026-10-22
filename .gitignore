@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -18,3 +18,8 @@ mobile-flutter/.flutter-plugins-dependencies
 Thumbs.db
 .idea/
 .vscode/
+
+# Android Keystore Secrets
+key.properties
+*.keystore
+*.jks

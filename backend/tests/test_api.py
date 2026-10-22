@@ -358,14 +358,120 @@ def test_production_safeguards_raise_error():
     # Temporarily simulate production environment with default secret key
     old_env = os.environ.get("ENVIRONMENT")
     try:
-        os.environ["ENVIRONMENT"] = "production"
-        with pytest.raises(RuntimeError) as exc_info:
-            Settings()
-        assert "FATAL SECURITY ERROR" in str(exc_info.value)
+        # Test exact lowercase and uppercase 'PROD' alias
+        for env_val in ["production", "PROD", "Production"]:
+            os.environ["ENVIRONMENT"] = env_val
+            with pytest.raises(RuntimeError) as exc_info:
+                Settings()
+            assert "FATAL SECURITY ERROR" in str(exc_info.value)
     finally:
         if old_env:
             os.environ["ENVIRONMENT"] = old_env
         else:
             del os.environ["ENVIRONMENT"]
+
+def test_websocket_in_band_auth_handshake():
+    # 1. Create ticket
+    create_res = client.post("/api/v1/tickets", json={
+        "session_token": "inband_auth_sess_1",
+        "customer_name": "Inband Customer",
+        "initial_message": "halo inband"
+    })
+    ticket_id = create_res.json()["id"]
+
+    # 2. Connect WITHOUT token in query string, then send auth event
+    with client.websocket_connect(f"/ws/ticket/{ticket_id}") as ws:
+        import json
+        ws.send_text(json.dumps({
+            "event": "auth",
+            "session_token": "inband_auth_sess_1"
+        }))
+        # Now send chat message
+        ws.send_text(json.dumps({
+            "event": "send_message",
+            "content": "Pesan via inband handshake auth"
+        }))
+        resp = ws.receive_text()
+        data = json.loads(resp)
+        assert data["event"] == "new_message"
+        assert data["sender_type"] == "CUSTOMER"
+        assert data["content"] == "Pesan via inband handshake auth"
+
+def test_websocket_payload_and_content_length_limits():
+    # 1. Create ticket
+    create_res = client.post("/api/v1/tickets", json={
+        "session_token": "limit_test_sess_2",
+        "customer_name": "Limit Tester",
+        "initial_message": "halo limit"
+    })
+    ticket_id = create_res.json()["id"]
+
+    # 2. Connect and send oversized message (> 3000 chars)
+    with client.websocket_connect(f"/ws/ticket/{ticket_id}?session_token=limit_test_sess_2") as ws:
+        import json
+        huge_text = "X" * 3500
+        ws.send_text(json.dumps({
+            "event": "send_message",
+            "content": huge_text
+        }))
+        resp = ws.receive_text()
+        data = json.loads(resp)
+        assert data["event"] == "error"
+        assert "3000" in data["message"]
+
+def test_websocket_rate_limiting():
+    create_res = client.post("/api/v1/tickets", json={
+        "session_token": "rate_test_sess_3",
+        "customer_name": "Rate Tester",
+        "initial_message": "halo rate"
+    })
+    ticket_id = create_res.json()["id"]
+
+    with client.websocket_connect(f"/ws/ticket/{ticket_id}?session_token=rate_test_sess_3") as ws:
+        import json
+        # Send 7 rapid messages in an immediate burst
+        for i in range(7):
+            ws.send_text(json.dumps({
+                "event": "send_message",
+                "content": f"Pesan cepat {i}"
+            }))
+
+        error_received = False
+        for _ in range(20):
+            try:
+                resp = ws.receive_text()
+                data = json.loads(resp)
+                if data.get("event") == "error" and "Batas" in data.get("message", ""):
+                    error_received = True
+                    break
+            except Exception:
+                break
+        assert error_received is True
+
+def test_honest_payment_fallback_draft():
+    db = SessionLocal()
+    try:
+        from app.models.ticket import Ticket
+        from app.models.message import Message
+        ticket = Ticket(
+            subject="Pembayaran via QRIS belum masuk",
+            category="BILLING",
+            priority="HIGH",
+            status="WAITING_AGENT"
+        )
+        msg = Message(
+            ticket_id=ticket.id,
+            sender_type="CUSTOMER",
+            sender_name="Siti",
+            content="Saya sudah bayar qris tapi statusnya belum terupdate"
+        )
+        analysis = AIBotService.generate_copilot_analysis(db, ticket, [msg])
+        draft = analysis["draft_reply"]
+        # Must not falsely claim gateway has verified the transaction
+        assert "sedang kami verifikasi pada gateway" not in draft
+        assert "nomor referensi transaksi atau bukti transfer" in draft
+    finally:
+        db.close()
+
 
 

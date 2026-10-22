@@ -1,0 +1,11 @@
+# ==============================================================================
+# Android Release Keystore Configuration Template
+# Copy this file to key.properties and configure your release keystore details.
+# DO NOT commit key.properties or *.keystore / *.jks to version control!
+# ==============================================================================
+
+# Example for local keystore:
+# keyAlias=ciheul-release-key
+# keyPassword=your_key_password_here
+# storeFile=../ciheul-upload-keystore.jks
+# storePassword=your_store_password_here

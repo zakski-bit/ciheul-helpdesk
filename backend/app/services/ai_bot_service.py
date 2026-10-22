@@ -117,20 +117,26 @@ class AIBotService:
                 "follow_ups": ["Menunggu pesan pelanggan"]
             }
 
-        conversation_text = "\n".join([f"{m.sender_name}: {m.content}" for m in messages])
+        # Anonymize participant identities before external processing
+        anonymized_lines = []
+        for m in messages:
+            role = "Pelanggan" if m.sender_type == "CUSTOMER" else ("Agen CS" if m.sender_type == "AGENT" else m.sender_type)
+            anonymized_lines.append(f"{role}: {m.content}")
+        anonymized_conversation = "\n".join(anonymized_lines)
+
         cust_name = ticket.customer.name if ticket.customer else "Pelanggan"
         first_cust_msg = next((m.content for m in messages if m.sender_type == "CUSTOMER"), ticket.subject)
 
-        # 1. If Gemini API key is available, call Gemini API with sanitized PII
+        # 1. If Gemini API key is available, call Gemini API with sanitized PII & anonymized identities
         if cls.GEMINI_API_KEY:
             try:
-                sanitized_conversation = cls.sanitize_pii(conversation_text)
+                sanitized_conversation = cls.sanitize_pii(anonymized_conversation)
                 prompt = (
                     f"Anda adalah Copilot AI untuk agen Customer Support CIHEUL Technologies.\n"
-                    f"Percakapan pelanggan:\n{sanitized_conversation}\n\n"
+                    f"Percakapan obrolan:\n{sanitized_conversation}\n\n"
                     f"Berikan output dalam format JSON valid tanpa markdown formatting dengan kunci:\n"
                     f"1. 'summary': Ringkasan 2 kalimat tentang masalah apa yang dialami pelanggan.\n"
-                    f"2. 'draft_reply': Draf balasan profesional dan solutif untuk agen CS kirimkan ke {cust_name}. DILARANG menggunakan emoji.\n"
+                    f"2. 'draft_reply': Draf balasan profesional dan solutif untuk agen CS kirimkan ke pelanggan. Gunakan sapaan 'Halo [NAMA_PELANGGAN]'. DILARANG menggunakan emoji.\n"
                     f"3. 'follow_ups': Array berisi 2 rekomendasi tindakan teknis selanjutnya."
                 )
                 gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={cls.GEMINI_API_KEY}"
@@ -140,7 +146,10 @@ class AIBotService:
                     if resp.status_code == 200:
                         content_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
                         cleaned_json = re.sub(r'^```json\s*|\s*```$', '', content_text.strip(), flags=re.MULTILINE)
-                        return json.loads(cleaned_json)
+                        res_data = json.loads(cleaned_json)
+                        if isinstance(res_data, dict) and "draft_reply" in res_data:
+                            res_data["draft_reply"] = res_data["draft_reply"].replace("[NAMA_PELANGGAN]", cust_name)
+                        return res_data
             except Exception as e:
                 pass  # Fallback to local intelligent analysis
 
@@ -151,8 +160,8 @@ class AIBotService:
             draft = f"Halo {cust_name}, saya memahami kendala akses kata sandi pada akun Anda. Untuk membantu proses reset, mohon konfirmasikan apakah Anda masih memiliki akses ke alamat email terdaftar Anda?"
             follow_ups = ["Verifikasi status kepemilikan email akun", "Tandai kategori Akun & Keamanan"]
         elif "bayar" in lower_first or "pembayaran" in lower_first or "qris" in lower_first or "tagihan" in lower_first:
-            summary = f"Pelanggan {cust_name} menanyakan metode pembayaran atau konfirmasi status transaksi. Membutuhkan verifikasi gateway pembayaran."
-            draft = f"Halo {cust_name}, terima kasih telah menunggu. Transaksi Anda saat ini sedang kami verifikasi pada gateway pembayaran kami. Bisa tolong sebutkan nomor referensi transaksi atau bukti transfer Anda?"
+            summary = f"Pelanggan {cust_name} menanyakan konfirmasi transaksi atau kendala pembayaran. Agen perlu menanyakan nomor referensi transaksi."
+            draft = f"Halo {cust_name}, terima kasih telah menghubungi kami. Untuk membantu pengecekan status pembayaran, mohon informasikan nomor referensi transaksi atau bukti transfer yang Anda miliki agar tim kami dapat melakukan verifikasi."
             follow_ups = ["Cek riwayat mutasi pembayaran di dashboard finance", "Kirim invoice resmi"]
         elif "aplikasi" in lower_first or "error" in lower_first or "bug" in lower_first or "loading" in lower_first:
             summary = f"Pelanggan {cust_name} melaporkan kendala teknis pada aplikasi (loading atau kegagalan sistem). Perlu investigasi log server."
