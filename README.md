@@ -15,10 +15,10 @@ Sistem ini menghubungkan **3 platform utama secara real-time** (*Always-Connecte
 
 | Soal | Komponen | Lokasi File Deliverables | Keterangan |
 | :--- | :--- | :--- | :--- |
-| **Soal 1a** | Swimlane BPMN | [`docs/bpmn/helpdesk_process_swimlane.drawio`](file:///C:/Users/Dell%203490/.gemini/antigravity/scratch/ciheul-helpdesk/docs/bpmn/helpdesk_process_swimlane.drawio)<br/>[`docs/bpmn/PREVIEW_BPMN.html`](file:///C:/Users/Dell%203490/.gemini/antigravity/scratch/ciheul-helpdesk/docs/bpmn/PREVIEW_BPMN.html) | Diagram swimlane 4 role (Pelanggan, AI Bot, CS Agent, Supervisor). Buka di draw.io lalu export ke PDF. |
-| **Soal 1b** | WBS Spreadsheet | [`docs/wbs/wbs_helpdesk_system.xlsx`](file:///C:/Users/Dell%203490/.gemini/antigravity/scratch/ciheul-helpdesk/docs/wbs/wbs_helpdesk_system.xlsx) | File Excel resmi berisi 8 modul, 24 fitur, durasi, bobot (100%), dan DoD. |
+| **Soal 1a** | Swimlane BPMN | [`docs/bpmn/helpdesk_process_swimlane.pdf`](./docs/bpmn/helpdesk_process_swimlane.pdf)<br/>[`docs/bpmn/helpdesk_process_swimlane.drawio`](./docs/bpmn/helpdesk_process_swimlane.drawio)<br/>[`docs/bpmn/PREVIEW_BPMN.html`](./docs/bpmn/PREVIEW_BPMN.html) | Dokumen PDF resmi vektor siap tinjau, file source draw.io, dan preview HTML interaktif 4 role (Pelanggan, AI Bot, CS Agent, Supervisor). |
+| **Soal 1b** | WBS Spreadsheet | [`docs/wbs/wbs_helpdesk_system.xlsx`](./docs/wbs/wbs_helpdesk_system.xlsx) | File Excel resmi berisi 8 modul, 24 fitur, durasi, bobot (100%), dan DoD. |
 | **Soal 2** | Source Code Monorepo | `backend/`, `web-dashboard/`, `widget-js/`, `mobile-flutter/` | Monorepo modular lengkap dengan WebSocket 3-arah dan AI triage. |
-| **Khusus APK**| Android Mobile APK | [`.github/workflows/build-apk.yml`](file:///C:/Users/Dell%203490/.gemini/antigravity/scratch/ciheul-helpdesk/.github/workflows/build-apk.yml) | Otomatisasi kompilasi APK release via GitHub Actions CI/CD atau compile lokal. |
+| **Khusus APK**| Android Mobile APK | [`.github/workflows/build-apk.yml`](./.github/workflows/build-apk.yml) | Otomatisasi kompilasi APK release via GitHub Actions CI/CD atau compile lokal. |
 
 ---
 
@@ -87,7 +87,7 @@ Jalankan pengujian unit dan integrasi backend menggunakan Pytest:
 ```bash
 pytest backend/tests/test_api.py -v
 ```
-Hasil pengujian: **13 PASSED (100% Green)** mencakup:
+Hasil pengujian: **22 PASSED (100% Green)** mencakup:
 - Keamanan Password Hashing dengan per-user random cryptographic salt (`salt$hash`)
 - Autentikasi JWT dan Session Token
 - Evaluasi AI Bot deflection & intent detection
@@ -97,6 +97,13 @@ Hasil pengujian: **13 PASSED (100% Green)** mencakup:
 - Role-Based Access Control (RBAC) mutasi Knowledge Base khusus Admin
 - Pengamanan WebSocket (`/ws/agents` dan `/ws/ticket/{id}`) terhadap akses anonim dan sender spoofing
 - Analisis Copilot Assistant AI dan follow-up actions
+- In-band first-message authentication handshake pada WebSocket (zero credential token di query URL log)
+- Batas ketat frame payload 64 KB UTF-8 dan pembatasan frekuensi event koneksi (rate limiting)
+- Validasi batas panjang input pembuatan tiket (maksimal 3000 karakter)
+- Penyamaran ID agen CS pada endpoint publik pelanggan
+- Safeguard keamanan lingkungan production dan staging (larangan penggunaan default secret/password)
+- Sanitasi PII (NIK, nomor rekening, kartu kredit, telepon, email, nama) sebelum evaluasi AI
+- Draft fallback pembayaran yang akurat dan jujur (tanpa klaim palsu verifikasi gateway)
 
 ---
 

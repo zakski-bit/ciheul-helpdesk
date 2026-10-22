@@ -60,8 +60,26 @@ class Settings:
         if cors_env:
             self.BACKEND_CORS_ORIGINS: list = [origin.strip() for origin in cors_env.split(",") if origin.strip()]
         elif self.IS_PRODUCTION:
-            self.BACKEND_CORS_ORIGINS: list = ["https://ciheul.com", "https://helpdesk.ciheul.com"]
+            self.BACKEND_CORS_ORIGINS: list = [
+                "https://ciheul.com",
+                "https://helpdesk.ciheul.com"
+            ]
+        elif raw_env == "staging":
+            self.BACKEND_CORS_ORIGINS: list = [
+                "https://ciheul.com",
+                "https://helpdesk.ciheul.com",
+                "https://staging.ciheul.com",
+                "https://staging-helpdesk.ciheul.com"
+            ]
         else:
-            self.BACKEND_CORS_ORIGINS: list = ["*"]
+            # Development / testing: explicit local origins to safely support allow_credentials=True
+            self.BACKEND_CORS_ORIGINS: list = [
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "http://localhost:8000",
+                "http://127.0.0.1:8000",
+                "http://localhost:5500",
+                "http://127.0.0.1:5500"
+            ]
 
 settings = Settings()

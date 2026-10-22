@@ -311,6 +311,18 @@ def test_ai_bot_pii_sanitization():
     assert "[ACCOUNT_REDACTED]" in sanitized
     assert "Ahmad Syarif" not in sanitized
 
+    # Test false-positive prevention on Indonesian verbs following 'nama saya'
+    false_positive_sentence = "Nama saya belum bisa login ke aplikasi."
+    sanitized_fp = AIBotService.sanitize_pii(false_positive_sentence)
+    assert "belum bisa" in sanitized_fp
+    assert "[NAMA_PELANGGAN]" not in sanitized_fp
+
+    # Test genuine name introduction masking
+    intro_sentence = "Halo tim support, perkenalkan nama saya Lisa Wardhana mohon bantuannya."
+    sanitized_intro = AIBotService.sanitize_pii(intro_sentence)
+    assert "Lisa Wardhana" not in sanitized_intro
+    assert "[NAMA_PELANGGAN]" in sanitized_intro
+
 def test_copilot_fallback_no_hallucination():
     db = SessionLocal()
     try:

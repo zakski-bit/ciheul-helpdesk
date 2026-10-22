@@ -84,8 +84,19 @@ jobs:
 
       - name: Configure Production Release Keystore
         working-directory: mobile-flutter/android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
         run: |
-          if [ ! -f "key.properties" ]; then
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > ciheul-release.jks
+            echo "keyAlias=${KEY_ALIAS:-ciheul_release_key}" > key.properties
+            echo "keyPassword=${KEY_PASSWORD:-ciheul_keystore_pass123}" >> key.properties
+            echo "storeFile=ciheul-release.jks" >> key.properties
+            echo "storePassword=${STORE_PASSWORD:-ciheul_keystore_pass123}" >> key.properties
+          elif [ ! -f "key.properties" ]; then
             keytool -genkeypair -v -keystore ciheul-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias ciheul_release_key -dname "CN=Ciheul Helpdesk, OU=Engineering, O=Ciheul Technologies, C=ID" -storepass ciheul_keystore_pass123 -keypass ciheul_keystore_pass123
             echo "keyAlias=ciheul_release_key" > key.properties
             echo "keyPassword=ciheul_keystore_pass123" >> key.properties

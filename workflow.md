@@ -23,7 +23,7 @@ Dokumen ini memetakan implementasi konkret dari **10 Langkah Pengembangan Aplika
 
 ### Langkah 1: Tulis PRD Lengkap
 - **Status:** **SELESAI (DONE)**
-- **Dokumen:** [`prd.md`](file:///C:/Users/Dell%203490/.gemini/antigravity/scratch/ciheul-helpdesk/prd.md)
+- **Dokumen:** [`prd.md`](./prd.md)
 - **Cakupan:** Tujuan proyek, peran aktor (Pelanggan, CS, Admin, AI Bot), kebutuhan fungsional (Widget, Web Dashboard, Mobile Flutter, Realtime Hub, AI Handoff), user flow, dan kriteria keberhasilan.
 
 ### Langkah 2: Full UI & UX Design Brief
@@ -67,7 +67,7 @@ Dokumen ini memetakan implementasi konkret dari **10 Langkah Pengembangan Aplika
   - `refactor`: Perapian struktur kode tanpa mengubah fungsi.
 
 ### Langkah 8: Ubah Task Jadi Skill
-- Setiap modul yang dibuat dirangkum sebagai pola yang dapat digunakan kembali (*reusable skills*), didokumentasikan dalam [`skill.md`](file:///C:/Users/Dell%203490/.gemini/antigravity/scratch/ciheul-helpdesk/skill.md).
+- Setiap modul yang dibuat dirangkum sebagai pola yang dapat digunakan kembali (*reusable skills*), didokumentasikan dalam [`skill.md`](./skill.md).
 
 ### Langkah 9: Optimalkan Performa Aplikasi
 - **Frontend Widget:** Bundling murni Vanilla JavaScript dengan ukuran $< 40$ KB.

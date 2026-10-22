@@ -124,7 +124,31 @@ class AIBotService:
             text = re.sub(re.escape(clean_agent), '[NAMA_AGEN]', text, flags=re.IGNORECASE)
 
         # 8. Mask explicit name introductions (e.g. "nama saya Ahmad", "panggil saya Lisa")
-        text = re.sub(r'\b(nama saya|nama ku|panggil saya|atas nama)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)', r'\1 [NAMA_PELANGGAN]', text, flags=re.IGNORECASE)
+        # Exclude common Indonesian verbs, prepositions, and non-name words from false-positive masking
+        indonesian_non_name_words = {
+            "belum", "sudah", "tidak", "bukan", "mau", "ingin", "bisa", "dapat",
+            "lagi", "sedang", "akan", "hanya", "tetap", "ada", "juga", "pun",
+            "selalu", "sering", "pernah", "tapi", "namun", "dan", "atau", "karena",
+            "agar", "supaya", "untuk", "dengan", "pada", "di", "ke", "dari",
+            "yang", "ini", "itu", "adalah", "yaitu", "akun", "email", "user",
+            "nomor", "no", "terkendala", "error", "rusak", "hilang", "terblokir",
+            "terkunci", "kenapa", "mengapa", "bagaimana", "tolong", "mohon"
+        }
+
+        def _mask_name_intro(match):
+            prefix = match.group(1)
+            candidate = match.group(2).strip()
+            first_token = candidate.split()[0].lower()
+            if first_token in indonesian_non_name_words:
+                return match.group(0)
+            return f"{prefix} [NAMA_PELANGGAN]"
+
+        text = re.sub(
+            r'\b(nama saya|nama ku|namaku|panggil saya|atas nama)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)',
+            _mask_name_intro,
+            text,
+            flags=re.IGNORECASE
+        )
 
         return text
 

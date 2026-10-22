@@ -184,6 +184,8 @@
         globalSocket.onopen = () => {
             // In-band authentication handshake - zero token in URL query string
             globalSocket.send(JSON.stringify({ event: "auth", token: authToken }));
+            // Immediate sync of tickets and counters upon connect or reconnect
+            loadTickets();
 
             const hb = setInterval(() => {
                 if (globalSocket && globalSocket.readyState === WebSocket.OPEN) {
@@ -390,25 +392,75 @@
     // 5. Connect 1-on-1 Room WebSocket (Authenticated with JWT)
     function connectRoomWebSocket(ticketId) {
         if (!authToken) return;
-        if (roomSocket) roomSocket.close();
+        if (roomSocket) {
+            roomSocket.onclose = null; // Detach old reconnect handler to avoid stale reconnections
+            roomSocket.close();
+        }
         roomSocket = new WebSocket(`${WS_BASE}/ws/ticket/${ticketId}`);
 
         roomSocket.onopen = () => {
             // In-band authentication handshake - zero token in URL query string
             roomSocket.send(JSON.stringify({ event: "auth", token: authToken }));
+
+            // Sync any messages missed during disconnection
+            let lastId = null;
+            if (activeTicket && Array.isArray(activeTicket.messages) && activeTicket.messages.length > 0) {
+                const lastMsg = activeTicket.messages[activeTicket.messages.length - 1];
+                if (lastMsg && lastMsg.id) lastId = lastMsg.id;
+            }
+            roomSocket.send(JSON.stringify({
+                event: "sync_missed",
+                last_message_id: lastId
+            }));
         };
 
         roomSocket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 if (data.event === "new_message") {
-                    appendConvoMessage(data.sender_type, data.sender_name, data.content, data.created_at);
-                    loadCopilotAnalysis(ticketId);
+                    if (activeTicket) {
+                        if (!activeTicket.messages) activeTicket.messages = [];
+                        const alreadyExists = activeTicket.messages.some(m => m.id && data.id && m.id === data.id);
+                        if (!alreadyExists) {
+                            activeTicket.messages.push(data);
+                            appendConvoMessage(data.sender_type, data.sender_name, data.content, data.created_at);
+                            loadCopilotAnalysis(ticketId);
+                        }
+                    } else {
+                        appendConvoMessage(data.sender_type, data.sender_name, data.content, data.created_at);
+                    }
+                } else if (data.event === "sync_result" && Array.isArray(data.messages)) {
+                    let hasNew = false;
+                    if (activeTicket) {
+                        if (!activeTicket.messages) activeTicket.messages = [];
+                        data.messages.forEach(m => {
+                            const alreadyExists = activeTicket.messages.some(existing => existing.id && m.id && existing.id === m.id);
+                            if (!alreadyExists) {
+                                activeTicket.messages.push(m);
+                                appendConvoMessage(m.sender_type, m.sender_name, m.content, m.created_at);
+                                hasNew = true;
+                            }
+                        });
+                        if (hasNew) {
+                            loadCopilotAnalysis(ticketId);
+                        }
+                    }
                 } else if (data.event === "ticket_claimed" || data.event === "ticket_resolved" || data.event === "ticket_escalated") {
                     selectTicket(ticketId);
                 }
             } catch (e) {
                 console.error(e);
+            }
+        };
+
+        roomSocket.onclose = () => {
+            // Reconnect room WebSocket if this ticket is still the active open ticket
+            if (authToken && activeTicket && activeTicket.id === ticketId) {
+                setTimeout(() => {
+                    if (authToken && activeTicket && activeTicket.id === ticketId) {
+                        connectRoomWebSocket(ticketId);
+                    }
+                }, 3000);
             }
         };
     }
