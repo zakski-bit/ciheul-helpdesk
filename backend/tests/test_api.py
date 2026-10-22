@@ -681,6 +681,85 @@ def test_rate_limiter_bounded_memory_cleanup():
     limiter._cleanup_expired(time.time() + 2)
     assert len(limiter._records) <= 50
 
+def test_file_attachment_upload_and_validation():
+    import io
+    # 1. Create a ticket
+    create_res = client.post("/api/v1/tickets", json={
+        "session_token": "test_upload_session_999",
+        "customer_name": "Rian Pengunggah",
+        "initial_message": "ada kendala pembayaran eror"
+    })
+    assert create_res.status_code == 200
+    ticket_id = create_res.json()["id"]
+
+    # 2. Upload valid image
+    fake_img = io.BytesIO(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDRtest_image_bytes")
+    fake_img.name = "screenshot_kendala.png"
+    upload_res = client.post(
+        f"/api/v1/tickets/{ticket_id}/upload",
+        files={"file": ("screenshot_kendala.png", fake_img, "image/png")},
+        data={"session_token": "test_upload_session_999"}
+    )
+    assert upload_res.status_code == 200
+    data = upload_res.json()
+    assert data["status"] == "success"
+    assert "screenshot_kendala.png" in data["content"]
+    assert "/uploads/" in data["file_url"]
+
+    # 3. Reject unsupported extension
+    bad_file = io.BytesIO(b"malicious script")
+    bad_file.name = "exploit.exe"
+    bad_res = client.post(
+        f"/api/v1/tickets/{ticket_id}/upload",
+        files={"file": ("exploit.exe", bad_file, "application/octet-stream")},
+        data={"session_token": "test_upload_session_999"}
+    )
+    assert bad_res.status_code == 400
+    assert "tidak didukung" in bad_res.json()["detail"]
+
+    # 4. Upload as authenticated CS agent
+    login_res = client.post("/api/v1/auth/login", json={
+        "email": "cs@ciheul.com",
+        "password": "cs123"
+    })
+    agent_token = login_res.json()["access_token"]
+    doc_file = io.BytesIO(b"%PDF-1.4 test pdf content")
+    doc_file.name = "panduan_resolusi.pdf"
+    agent_upload_res = client.post(
+        f"/api/v1/tickets/{ticket_id}/upload",
+        files={"file": ("panduan_resolusi.pdf", doc_file, "application/pdf")},
+        headers={"Authorization": f"Bearer {agent_token}"}
+    )
+    assert agent_upload_res.status_code == 200
+    assert agent_upload_res.json()["status"] == "success"
+
+def test_copilot_recency_and_followup_generation():
+    # 1. Create a ticket
+    create_res = client.post("/api/v1/tickets", json={
+        "session_token": "test_copilot_session_777",
+        "customer_name": "Dewi Analisis",
+        "initial_message": "halo bot"
+    })
+    ticket_id = create_res.json()["id"]
+
+    # 2. CS Agent logs in and analyzes ticket
+    login_res = client.post("/api/v1/auth/login", json={
+        "email": "cs@ciheul.com",
+        "password": "cs123"
+    })
+    agent_token = login_res.json()["access_token"]
+
+    copilot_res = client.post(
+        f"/api/v1/copilot/{ticket_id}/analyze",
+        headers={"Authorization": f"Bearer {agent_token}"}
+    )
+    assert copilot_res.status_code == 200
+    analysis = copilot_res.json()
+    assert "draft_reply" in analysis
+    assert len(analysis["follow_ups"]) >= 1
+    assert analysis["customer_name"] == "Dewi Analisis"
+
+
 
 
 

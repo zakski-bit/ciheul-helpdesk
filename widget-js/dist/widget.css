@@ -232,6 +232,26 @@
     border-color: #0284c7;
 }
 
+.ch-attach-btn {
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    width: 34px;
+    height: 34px;
+    border-radius: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    flex-shrink: 0;
+}
+
+.ch-attach-btn:hover {
+    color: #111827;
+    background: #f3f4f6;
+}
+
 .ch-send-btn {
     background: #0284c7;
     border: none;

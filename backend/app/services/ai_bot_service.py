@@ -212,24 +212,80 @@ class AIBotService:
             except Exception as e:
                 pass  # Fallback to local intelligent analysis
 
-        # 2. Local Intelligent Contextual Analysis (RAG & Rules)
-        lower_first = first_cust_msg.lower()
-        if "password" in lower_first or "kata sandi" in lower_first:
+        # 2. Local Intelligent Contextual Analysis (Dynamic KB Semantic Matching & Recency Awareness)
+        cust_messages = [m.content for m in messages if m.sender_type == "CUSTOMER"]
+        latest_cust_msg = cust_messages[-1] if cust_messages else ticket.subject
+        combined_context = f"{ticket.subject} {latest_cust_msg}".lower()
+        context_words = set(re.findall(r'\b\w+\b', combined_context))
+
+        # Check explicit mention of file attachment or screenshot
+        if any(w in combined_context for w in ["lampir", "file", "screenshot", "tangkapan", "layar", "ngirim berkas", "kirim berkas"]):
+            summary = f"Pelanggan {cust_name} menanyakan atau mengeluhkan cara melampirkan berkas bukti kendala (tangkapan layar)."
+            draft = (
+                f"Halo {cust_name}, Anda dapat melampirkan gambar tangkapan layar atau berkas bukti kendala "
+                f"(format PNG, JPG, atau PDF) secara langsung dengan menekan tombol ikon klip kertas di sebelah kiri kolom pesan."
+            )
+            follow_ups = [
+                "Pandu pelanggan menekan ikon klip lampiran",
+                "Tanyakan apakah kendala sudah jelas terlihat di gambar",
+                "Tandai tiket Selesai"
+            ]
+            return {"summary": summary, "draft_reply": draft, "follow_ups": follow_ups}
+
+        # Handle specific escalation domains that require human CS verification
+        if "password" in combined_context or "kata sandi" in combined_context:
             summary = f"Pelanggan {cust_name} mengalami kendala akses atau reset kata sandi pada akunnya. Sistem otomatis telah mengarahkan panduan awal namun sesi dialihkan ke CS."
             draft = f"Halo {cust_name}, saya memahami kendala akses kata sandi pada akun Anda. Untuk membantu proses reset, mohon konfirmasikan apakah Anda masih memiliki akses ke alamat email terdaftar Anda?"
-            follow_ups = ["Verifikasi status kepemilikan email akun", "Tandai kategori Akun & Keamanan"]
-        elif "bayar" in lower_first or "pembayaran" in lower_first or "qris" in lower_first or "tagihan" in lower_first:
+            follow_ups = ["Verifikasi kepemilikan email akun", "Kirim instruksi reset kata sandi", "Tandai tiket Selesai"]
+            return {"summary": summary, "draft_reply": draft, "follow_ups": follow_ups}
+
+        if "bayar" in combined_context or "pembayaran" in combined_context or "qris" in combined_context or "tagihan" in combined_context:
             summary = f"Pelanggan {cust_name} menanyakan konfirmasi transaksi atau kendala pembayaran. Agen perlu menanyakan nomor referensi transaksi."
             draft = f"Halo {cust_name}, terima kasih telah menghubungi kami. Untuk membantu pengecekan status pembayaran, mohon informasikan nomor referensi transaksi atau bukti transfer yang Anda miliki agar tim kami dapat melakukan verifikasi."
-            follow_ups = ["Cek riwayat mutasi pembayaran di dashboard finance", "Kirim invoice resmi"]
-        elif "aplikasi" in lower_first or "error" in lower_first or "bug" in lower_first or "loading" in lower_first:
+            follow_ups = ["Cek riwayat transaksi di modul pembayaran", "Kirim invoice resmi", "Tandai tiket Selesai"]
+            return {"summary": summary, "draft_reply": draft, "follow_ups": follow_ups}
+
+        if "aplikasi" in combined_context or "error" in combined_context or "bug" in combined_context or "loading" in combined_context or "crash" in combined_context:
             summary = f"Pelanggan {cust_name} melaporkan kendala teknis pada aplikasi (loading atau kegagalan sistem). Perlu investigasi log server."
             draft = f"Halo {cust_name}, mohon maaf atas ketidaknyamanan ini. Untuk membantu pemeriksaan kendala aplikasi, silakan coba tutup aplikasi sepenuhnya dan bersihkan cache perangkat Anda terlebih dahulu. Jika kendala masih berlanjut, mohon informasikan versi aplikasi serta detail pesan kesalahan yang muncul."
-            follow_ups = ["Periksa error log pada server", "Laporkan ke tim Engineering jika berulang"]
-        else:
-            summary = f"Pelanggan {cust_name} membuka konsultasi terkait: '{first_cust_msg[:90]}'. Tiket telah masuk dalam antrean aktif penanganan CS."
-            draft = f"Halo {cust_name}, terima kasih telah menghubungi tim Support CIHEUL. Saya sedang meninjau kendala Anda dan siap membantu menyelesaikan masalah ini hingga tuntas. Bisa jelaskan lebih lanjut detail yang Anda alami?"
-            follow_ups = ["Minta detail tangkapan layar jika relevan", "Update status tiket ke Aktif"]
+            follow_ups = ["Periksa error log pada server", "Laporkan ke tim Engineering jika berulang", "Tandai tiket Selesai"]
+            return {"summary": summary, "draft_reply": draft, "follow_ups": follow_ups}
+
+        # Match against 15 Knowledge Base FAQs using word overlap scoring
+        active_kbs = db.query(KnowledgeBase).filter(KnowledgeBase.is_active == True).all()
+        best_kb = None
+        best_score = 0.0
+
+        for kb in active_kbs:
+            kb_words = set(re.findall(r'\b\w+\b', kb.question.lower()))
+            if kb.keywords:
+                kb_words.update(re.findall(r'\b\w+\b', kb.keywords.lower()))
+            intersection = context_words.intersection(kb_words)
+            if not intersection:
+                continue
+            score = len(intersection) / (len(context_words.union(kb_words)) ** 0.55)
+            if score > best_score:
+                best_score = score
+                best_kb = kb
+
+        if best_kb and best_score >= 0.28:
+            topic_clean = best_kb.question.rstrip('?').lower()
+            summary = f"Pelanggan {cust_name} menanyakan kendala terkait: '{best_kb.question}'. Solusi tersedia di basis pengetahuan resmi CIHEUL."
+            draft = (
+                f"Halo {cust_name}, terkait pertanyaan Anda mengenai {topic_clean}:\n\n"
+                f"{best_kb.answer}\n\n"
+                f"Apakah panduan di atas membantu menyelesaikan kendala yang Anda alami?"
+            )
+            follow_ups = [
+                f"Tawarkan bantuan teknis lanjutan terkait {best_kb.category}",
+                "Konfirmasi apakah kendala sudah teratasi",
+                "Tandai tiket Selesai"
+            ]
+            return {"summary": summary, "draft_reply": draft, "follow_ups": follow_ups}
+
+        summary = f"Pelanggan {cust_name} sedang berkonsultasi mengenai: '{latest_cust_msg[:90]}'."
+        draft = f"Halo {cust_name}, terima kasih telah menghubungi tim Support CIHEUL. Saya telah meninjau laporan Anda dan siap membantu menyelesaikan kendala ini. Mohon informasikan detail tambahan yang Anda alami."
+        follow_ups = ["Minta detail tangkapan layar jika relevan", "Konfirmasi apakah kendala sudah teratasi", "Tandai tiket Selesai"]
 
         return {
             "summary": summary,

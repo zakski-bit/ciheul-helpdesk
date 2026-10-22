@@ -150,6 +150,11 @@
                 <textarea id="composer-input" rows="3" placeholder="Tulis balasan untuk pelanggan..." class="w-full px-3 py-2 text-sm text-[#111827] placeholder-[#9ca3af] outline-none resize-none" disabled></textarea>
                 <div class="px-3 py-2 bg-[#fcfcfd] border-t border-[#f3f4f6] flex items-center justify-between">
                     <div class="flex items-center gap-3 text-[#9ca3af]">
+                        <input type="file" id="agent-file-input" accept="image/png,image/jpeg,image/webp,application/pdf" class="hidden" />
+                        <button id="btn-agent-attach" class="hover:text-[#4b5563] text-xs font-medium flex items-center gap-1" title="Lampirkan Gambar atau Berkas">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                            <span>Attach</span>
+                        </button>
                         <button id="btn-quick-macro" class="hover:text-[#4b5563] text-xs font-medium flex items-center gap-1" title="Pesan Cepat">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             <span>Macro</span>
@@ -196,10 +201,12 @@
                     <p id="copilot-draft-text" class="text-xs text-[#111827] leading-relaxed">
                         Copilot akan menyusun draf balasan otomatis berdasarkan basis pengetahuan dan konteks percakapan.
                     </p>
-                    <div class="pt-2 border-t border-[#f3f4f6] flex items-center justify-between">
-                        <span class="text-[11px] text-[#9ca3af]">2 sources</span>
-                        <button id="btn-copilot-send" class="px-4 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-full text-xs font-semibold shadow-sm transition">
-                            Send to Customer
+                    <div class="pt-2 border-t border-[#f3f4f6] flex items-center justify-between gap-2">
+                        <button id="btn-copilot-use" class="px-3 py-1.5 border border-[#e5e7eb] hover:bg-[#f9fafb] text-[#374151] hover:text-[#111827] rounded-full text-xs font-semibold transition" title="Gunakan draf di kolom balasan">
+                            Gunakan Draf
+                        </button>
+                        <button id="btn-copilot-send" class="px-3.5 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-full text-xs font-semibold shadow-sm transition" title="Kirim langsung ke pelanggan">
+                            Kirim Langsung
                         </button>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
+import os
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List, Optional
@@ -331,3 +332,120 @@ def rate_ticket(
     ticket.status = "CLOSED"
     db.commit()
     return {"status": "success", "message": "Rating berhasil disimpan"}
+
+@router.post("/{ticket_id}/upload")
+async def upload_ticket_attachment(
+    ticket_id: str,
+    file: UploadFile = File(...),
+    session_token: Optional[str] = Form(None),
+    x_session_token: Optional[str] = Header(None, alias="X-Session-Token"),
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Tiket tidak ditemukan")
+    
+    # 1. Ownership & Authorization Verification
+    sender_type = "CUSTOMER"
+    sender_name = ticket.customer.name if ticket.customer else "Pelanggan"
+
+    is_authenticated_agent = False
+    if authorization and authorization.startswith("Bearer "):
+        try:
+            token = authorization.split(" ")[1]
+            payload = decode_access_token(token)
+            if payload and "sub" in payload:
+                agent_user = db.query(User).filter(User.id == payload["sub"], User.is_active == True).first()
+                if agent_user and agent_user.role in ["CS_AGENT", "ADMIN"]:
+                    is_authenticated_agent = True
+                    sender_type = "AGENT"
+                    sender_name = agent_user.full_name
+        except Exception:
+            pass
+
+    if not is_authenticated_agent:
+        provided_session = session_token or x_session_token
+        if not provided_session or not ticket.customer or ticket.customer.session_token != provided_session:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Otorisasi tidak valid: Hanya pemilik tiket atau agen yang dapat mengunggah berkas"
+            )
+
+    # 2. File validation (type & size)
+    ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".pdf"}
+    orig_filename = file.filename or "attachment"
+    _, ext = os.path.splitext(orig_filename)
+    ext = ext.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Format file '{ext}' tidak didukung. Harap unggah berkas gambar (PNG, JPG, WEBP) atau PDF."
+        )
+
+    # Max size 10MB
+    MAX_FILE_SIZE = 10 * 1024 * 1024
+    content_bytes = await file.read()
+    if len(content_bytes) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail="Ukuran berkas melebihi batas maksimum 10MB."
+        )
+
+    # 3. Store file securely
+    import uuid
+    import re
+    safe_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', orig_filename)
+    unique_filename = f"{uuid.uuid4().hex[:12]}_{safe_name}"
+    
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    uploads_dir = os.path.join(BASE_DIR, "uploads")
+    os.makedirs(uploads_dir, exist_ok=True)
+    file_path = os.path.join(uploads_dir, unique_filename)
+
+    with open(file_path, "wb") as f:
+        f.write(content_bytes)
+
+    file_url = f"/uploads/{unique_filename}"
+    message_content = f"[Lampiran: {orig_filename}]({file_url})"
+
+    # 4. Save message to DB
+    new_msg = Message(
+        ticket_id=ticket.id,
+        sender_type=sender_type,
+        sender_name=sender_name,
+        content=message_content
+    )
+    db.add(new_msg)
+    ticket.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(new_msg)
+
+    # 5. Broadcast via WebSocket
+    iso_time = new_msg.created_at.isoformat()
+    if not iso_time.endswith("Z"):
+        iso_time += "Z"
+
+    await ws_manager.broadcast_to_ticket(ticket.id, {
+        "event": "new_message",
+        "id": new_msg.id,
+        "ticket_id": ticket.id,
+        "sender_type": sender_type,
+        "sender_name": sender_name,
+        "content": new_msg.content,
+        "created_at": iso_time
+    })
+    await ws_manager.broadcast_to_agents("ticket_message_activity", {
+        "ticket_id": ticket.id,
+        "sender_type": sender_type,
+        "last_message": f"Mengirim lampiran: {orig_filename}"
+    })
+
+    return {
+        "status": "success",
+        "message_id": new_msg.id,
+        "file_url": file_url,
+        "filename": orig_filename,
+        "content": message_content
+    }
+

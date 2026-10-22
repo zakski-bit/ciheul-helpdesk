@@ -47,6 +47,10 @@ if os.path.exists(web_dashboard_path):
 if os.path.exists(widget_path):
     app.mount("/widget", StaticFiles(directory=widget_path, html=True), name="widget")
 
+uploads_path = os.path.join(BASE_DIR, "uploads")
+os.makedirs(uploads_path, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=uploads_path), name="uploads")
+
 @app.on_event("startup")
 def on_startup():
     init_database()

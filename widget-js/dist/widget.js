@@ -69,6 +69,10 @@
                 </div>
             </div>
             <div class="ch-input-bar">
+                <input type="file" id="ch-file-input" accept="image/png,image/jpeg,image/webp,application/pdf" style="display: none;" />
+                <button class="ch-attach-btn" id="ch-attach-btn" title="Lampirkan Gambar atau Berkas">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                </button>
                 <input type="text" class="ch-input" id="ch-input" placeholder="Tulis pertanyaan Anda..." autocomplete="off" />
                 <button class="ch-send-btn" id="ch-send-btn" title="Kirim">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -87,6 +91,8 @@
     const feed = document.getElementById("ch-feed");
     const input = document.getElementById("ch-input");
     const sendBtn = document.getElementById("ch-send-btn");
+    const attachBtn = document.getElementById("ch-attach-btn");
+    const fileInput = document.getElementById("ch-file-input");
     const escalateBar = document.getElementById("ch-escalate-bar");
     const escalateBtn = document.getElementById("ch-escalate-btn");
     const statusSub = document.getElementById("ch-status-sub");
@@ -145,11 +151,44 @@
         if (senderType === "SYSTEM") {
             msgDiv.innerText = content;
         } else {
-            msgDiv.innerHTML = `${escapeHTML(content)}<div class="ch-msg-time">${time}</div>`;
+            msgDiv.innerHTML = `${formatMessageContent(content)}<div class="ch-msg-time">${time}</div>`;
         }
         
         feed.appendChild(msgDiv);
         scrollToBottom();
+    }
+
+    function formatMessageContent(content) {
+        if (!content) return "";
+        const match = content.match(/\[Lampiran:?\s*(.*?)\]\((.*?)\)/);
+        if (match) {
+            const filename = match[1];
+            let url = match[2];
+            if (url.startsWith("/")) {
+                url = `${API_BASE}${url}`;
+            }
+            const isImg = /\.(png|jpe?g|webp|gif)$/i.test(filename) || /\.(png|jpe?g|webp|gif)$/i.test(url);
+            if (isImg) {
+                return `
+                    <div style="margin-bottom: 4px;">
+                        <a href="${url}" target="_blank" rel="noopener noreferrer">
+                            <img src="${url}" alt="${escapeHTML(filename)}" style="max-width: 100%; max-height: 200px; border-radius: 8px; display: block; border: 1px solid rgba(0,0,0,0.1); cursor: pointer;" />
+                        </a>
+                        <span style="font-size: 10.5px; opacity: 0.75; display: block; margin-top: 3px;">${escapeHTML(filename)}</span>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div style="margin-bottom: 4px;">
+                        <a href="${url}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            <span>${escapeHTML(filename)}</span>
+                        </a>
+                    </div>
+                `;
+            }
+        }
+        return escapeHTML(content);
     }
 
     function escapeHTML(str) {
@@ -450,6 +489,82 @@
             input.focus();
         });
     }
+
+    // Attachment Button & File Upload Handler
+    attachBtn.addEventListener("click", () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        // Validation: 10MB limit
+        if (file.size > 10 * 1024 * 1024) {
+            appendMessage("SYSTEM", "Sistem", "Ukuran berkas melebihi batas maksimal 10MB.");
+            fileInput.value = "";
+            return;
+        }
+
+        attachBtn.disabled = true;
+        attachBtn.style.opacity = "0.5";
+
+        try {
+            // If no active ticket exists yet, create ticket first
+            if (!activeTicketId) {
+                const createRes = await fetch(`${API_BASE}/api/v1/tickets`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        session_token: sessionToken,
+                        customer_name: "Pelanggan Web",
+                        initial_message: `Mengirim lampiran: ${file.name}`
+                    })
+                });
+                if (createRes.ok) {
+                    const ticket = await createRes.json();
+                    activeTicketId = ticket.id;
+                    localStorage.setItem("ciheul_ticket_id", activeTicketId);
+                    if (ticket.messages && ticket.messages.length > 0) {
+                        const firstMsg = ticket.messages[0];
+                        appendMessage(firstMsg.sender_type, firstMsg.sender_name, firstMsg.content, firstMsg.created_at, firstMsg.id);
+                        lastMessageId = firstMsg.id;
+                    }
+                    if (ticket.messages && ticket.messages.length > 1) {
+                        const botMsg = ticket.messages[1];
+                        appendMessage(botMsg.sender_type, botMsg.sender_name, botMsg.content, botMsg.created_at, botMsg.id);
+                        lastMessageId = botMsg.id;
+                    }
+                    updateStatusUI(ticket.status);
+                    connectWebSocket(activeTicketId);
+                } else {
+                    throw new Error("Gagal menginisialisasi percakapan untuk mengunggah berkas.");
+                }
+            }
+
+            // Upload the file to ticket
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("session_token", sessionToken);
+
+            const uploadRes = await fetch(`${API_BASE}/api/v1/tickets/${activeTicketId}/upload`, {
+                method: "POST",
+                body: formData
+            });
+
+            if (!uploadRes.ok) {
+                const errData = await uploadRes.json().catch(() => ({}));
+                appendMessage("SYSTEM", "Sistem", errData.detail || "Gagal mengunggah berkas.");
+            }
+        } catch (err) {
+            console.error("Upload failed:", err);
+            appendMessage("SYSTEM", "Sistem", "Terjadi kesalahan saat mengunggah berkas.");
+        } finally {
+            attachBtn.disabled = false;
+            attachBtn.style.opacity = "1";
+            fileInput.value = "";
+        }
+    });
 
     sendBtn.addEventListener("click", sendMessage);
     input.addEventListener("keydown", (e) => {

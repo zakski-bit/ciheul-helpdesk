@@ -402,6 +402,39 @@
         feed.scrollTop = feed.scrollHeight;
     }
 
+    function formatMessageContent(content) {
+        if (!content) return "";
+        const match = content.match(/\[Lampiran:?\s*(.*?)\]\((.*?)\)/);
+        if (match) {
+            const filename = match[1];
+            let url = match[2];
+            if (url.startsWith("/")) {
+                url = `${API_BASE}${url}`;
+            }
+            const isImg = /\.(png|jpe?g|webp|gif)$/i.test(filename) || /\.(png|jpe?g|webp|gif)$/i.test(url);
+            if (isImg) {
+                return `
+                    <div class="mb-1.5">
+                        <a href="${url}" target="_blank" rel="noopener noreferrer">
+                            <img src="${url}" alt="${escapeHtml(filename)}" class="max-w-full max-h-[220px] rounded-lg border border-black/10 cursor-pointer object-cover hover:opacity-95 transition" />
+                        </a>
+                        <span class="text-[10px] opacity-75 block mt-1">${escapeHtml(filename)}</span>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="mb-1.5">
+                        <a href="${url}" target="_blank" rel="noopener noreferrer" class="underline font-semibold inline-flex items-center gap-1.5 hover:opacity-80">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            <span>${escapeHtml(filename)}</span>
+                        </a>
+                    </div>
+                `;
+            }
+        }
+        return `<div class="whitespace-pre-wrap">${escapeHtml(content)}</div>`;
+    }
+
     function appendConvoMessage(senderType, senderName, content, timeStr) {
         const feed = document.getElementById("convo-feed");
         const msgDiv = document.createElement("div");
@@ -426,7 +459,7 @@
         msgDiv.innerHTML = `
             <div class="max-w-[75%] px-4 py-2.5 text-xs leading-relaxed ${bubbleStyle}">
                 <div class="font-bold text-[10px] mb-1 opacity-70">${escapeHtml(senderName)}</div>
-                <div class="whitespace-pre-wrap">${escapeHtml(content)}</div>
+                ${formatMessageContent(content)}
                 <div class="text-[9px] text-right mt-1 opacity-60">${time}</div>
             </div>
         `;
@@ -531,15 +564,70 @@
                 const followUpsEl = document.getElementById("copilot-followups");
                 followUpsEl.innerHTML = "";
                 data.follow_ups.forEach((act, idx) => {
-                    const row = document.createElement("div");
-                    row.className = "text-xs text-[#4b5563] bg-white p-2.5 rounded-lg border border-[#e5e7eb]";
-                    row.innerText = `${idx + 1}. ${act}`;
-                    followUpsEl.appendChild(row);
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "w-full text-left text-xs text-[#374151] hover:text-[#111827] bg-white hover:bg-[#f3f4f6] p-2.5 rounded-lg border border-[#e5e7eb] hover:border-[#9ca3af] transition flex items-center justify-between group shadow-sm";
+                    btn.innerHTML = `
+                        <span class="flex-1 pr-2">${idx + 1}. ${escapeHtml(act)}</span>
+                        <span class="text-[10px] text-[#0284c7] font-semibold opacity-0 group-hover:opacity-100 transition flex-shrink-0">Terapkan &rarr;</span>
+                    `;
+                    btn.addEventListener("click", () => {
+                        handleFollowUpAction(act);
+                    });
+                    followUpsEl.appendChild(btn);
                 });
             }
         } catch (e) {
             console.error("Copilot analysis error:", e);
         }
+    }
+
+    function handleFollowUpAction(act) {
+        if (!activeTicket) return;
+        const composer = document.getElementById("composer-input");
+        const lower = act.toLowerCase();
+
+        if (lower.includes("selesai") || lower.includes("resolved") || lower.includes("tandai tiket")) {
+            if (confirm("Tandai tiket ini sebagai Selesai (Resolved)?")) {
+                document.getElementById("btn-close-ticket").click();
+            }
+            return;
+        }
+
+        let replyTemplate = "";
+        if (lower.includes("screenshot") || lower.includes("tangkapan layar") || lower.includes("lampirkan") || lower.includes("bukti")) {
+            replyTemplate = `Halo ${activeTicket.customer_name}, mohon dapat melampirkan tangkapan layar (screenshot) atau pesan error yang muncul agar kami dapat melakukan pengecekan lebih lanjut. Anda dapat menekan ikon klip kertas pada kolom pesan untuk mengunggah berkas.`;
+        } else if (lower.includes("cache") || lower.includes("cookies")) {
+            replyTemplate = `Halo ${activeTicket.customer_name}, silakan coba membersihkan cache dan cookies pada peramban Anda, kemudian muat ulang halaman.`;
+        } else if (lower.includes("logout") || lower.includes("login")) {
+            replyTemplate = `Halo ${activeTicket.customer_name}, silakan coba logout dari akun Anda terlebih dahulu, kemudian login kembali.`;
+        } else if (lower.includes("transaksi") || lower.includes("mutasi") || lower.includes("rekening")) {
+            replyTemplate = `Halo ${activeTicket.customer_name}, mohon informasikan nomor referensi atau ID transaksi terkait agar dapat kami telusuri di sistem perbankan.`;
+        } else if (lower.includes("eskalasi") || lower.includes("tier-2") || lower.includes("infrastruktur")) {
+            replyTemplate = `Halo ${activeTicket.customer_name}, kendala ini sedang kami koordinasikan dengan tim teknis/infrastruktur terkait untuk penanganan lebih mendalam.`;
+        } else {
+            replyTemplate = `Halo ${activeTicket.customer_name}, mengenai kendala Anda: ${act}.`;
+        }
+
+        if (composer) {
+            composer.value = replyTemplate;
+            composer.focus();
+            composer.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }
+
+    // Use Copilot Draft in Composer
+    const btnCopilotUse = document.getElementById("btn-copilot-use");
+    if (btnCopilotUse) {
+        btnCopilotUse.addEventListener("click", () => {
+            if (!latestDraftReply) return;
+            const composer = document.getElementById("composer-input");
+            if (composer) {
+                composer.value = latestDraftReply;
+                composer.focus();
+                composer.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        });
     }
 
     // Dispatch Copilot Draft directly to customer
@@ -550,6 +638,55 @@
             content: latestDraftReply
         }));
     });
+
+    // Agent File Attachment in Dashboard
+    const btnAgentAttach = document.getElementById("btn-agent-attach");
+    const agentFileInput = document.getElementById("agent-file-input");
+    if (btnAgentAttach && agentFileInput) {
+        btnAgentAttach.addEventListener("click", () => {
+            if (!activeTicket) return;
+            agentFileInput.click();
+        });
+
+        agentFileInput.addEventListener("change", async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file || !activeTicket || !authToken) return;
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert("Ukuran berkas melebihi batas maksimal 10MB.");
+                agentFileInput.value = "";
+                return;
+            }
+
+            btnAgentAttach.disabled = true;
+            btnAgentAttach.classList.add("opacity-50");
+
+            try {
+                const formData = new FormData();
+                formData.append("file", file);
+
+                const res = await fetch(`${API_BASE}/api/v1/tickets/${activeTicket.id}/upload`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    alert(errData.detail || "Gagal mengunggah lampiran.");
+                }
+            } catch (err) {
+                console.error("Agent upload failed:", err);
+                alert("Terjadi kesalahan saat mengunggah berkas.");
+            } finally {
+                btnAgentAttach.disabled = false;
+                btnAgentAttach.classList.remove("opacity-50");
+                agentFileInput.value = "";
+            }
+        });
+    }
 
     // Ask Copilot custom question
     async function askCopilot() {
