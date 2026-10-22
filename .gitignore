@@ -33,3 +33,9 @@ key.properties
 backend/uploads/*
 !backend/uploads/.gitkeep
 
+# Local APK & Archive Artifacts
+*.apk
+*.zip
+apk-release/
+
+
