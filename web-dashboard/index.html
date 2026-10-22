@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox · CIHEUL Technologies</title>
+    <link rel="icon" type="image/png" href="/dashboard/assets/ciheul-logo.png">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            blue: '#0284c7',
+                            dark: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+    </style>
+</head>
+<body class="bg-[#f9fafb] text-[#111827] h-screen flex overflow-hidden select-none">
+
+    <!-- FAR-LEFT NAVIGATION BAR (56px) -->
+    <aside class="w-14 bg-white border-r border-[#e5e7eb] flex flex-col items-center py-4 justify-between z-20 flex-shrink-0">
+        <div class="flex flex-col items-center gap-6">
+            <!-- Ciheul Official Logo -->
+            <a href="/dashboard/index.html" title="CIHEUL Helpdesk">
+                <img src="/dashboard/assets/ciheul-logo.png" alt="CIHEUL Logo" class="w-8 h-8 object-contain rounded-md" />
+            </a>
+
+            <!-- Nav Icons -->
+            <nav class="flex flex-col gap-2">
+                <button class="w-9 h-9 rounded-lg bg-[#f3f4f6] text-[#111827] flex items-center justify-center font-medium" title="Inbox">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                </button>
+                <button class="w-9 h-9 rounded-lg text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] flex items-center justify-center transition" title="Tickets">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                </button>
+                <button class="w-9 h-9 rounded-lg text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] flex items-center justify-center transition" title="Knowledge Base">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </button>
+                <button class="w-9 h-9 rounded-lg text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] flex items-center justify-center transition" title="Settings">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Bottom Agent Avatar -->
+        <div class="flex flex-col items-center gap-3">
+            <a href="/widget/demo.html" target="_blank" class="w-7 h-7 rounded-full bg-[#f3f4f6] text-[#4b5563] hover:text-[#111827] flex items-center justify-center text-xs" title="Buka Simulasi Widget">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            </a>
+            <div id="agent-avatar-btn" class="w-8 h-8 rounded-full bg-[#3b82f6] text-white flex items-center justify-center font-bold text-xs" title="CS Specialist (Online)">
+                BP
+            </div>
+        </div>
+    </aside>
+
+    <!-- COLUMN 1: YOUR INBOX (Conversation List) -->
+    <section class="w-80 bg-white border-r border-[#e5e7eb] flex flex-col flex-shrink-0">
+        <!-- Inbox Header -->
+        <div class="px-4 py-3.5 border-b border-[#e5e7eb] flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-[#111827]">Your inbox</h2>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="open-count-badge" class="px-2 py-0.5 bg-[#f3f4f6] text-[#4b5563] text-xs font-semibold rounded-full">0 Open</span>
+            </div>
+        </div>
+
+        <!-- Sub Filter Bar -->
+        <div class="px-4 py-2 border-b border-[#f3f4f6] flex items-center justify-between text-xs text-[#6b7280]">
+            <span class="font-medium">Last activity</span>
+            <div class="flex gap-2">
+                <button class="filter-btn text-[#111827] font-semibold" data-status="ALL">Semua</button>
+                <span>·</span>
+                <button class="filter-btn text-[#6b7280] hover:text-[#111827]" data-status="WAITING_AGENT">Menunggu</button>
+                <span>·</span>
+                <button class="filter-btn text-[#6b7280] hover:text-[#111827]" data-status="RESOLVED">Selesai</button>
+            </div>
+        </div>
+
+        <!-- Scrollable Conversation List -->
+        <div id="conversation-list" class="flex-1 overflow-y-auto divide-y divide-[#f9fafb]">
+            <div class="p-8 text-center text-xs text-[#9ca3af]">Memuat percakapan...</div>
+        </div>
+    </section>
+
+    <!-- COLUMN 2: ACTIVE CONVERSATION -->
+    <section class="flex-1 bg-white border-r border-[#e5e7eb] flex flex-col min-w-0">
+        <!-- Conversation Header -->
+        <div id="convo-header" class="h-14 px-6 border-b border-[#e5e7eb] flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <h3 id="convo-customer-name" class="font-bold text-sm text-[#111827]">Pilih percakapan</h3>
+                <span id="convo-status-pill" class="hidden px-2.5 py-0.5 rounded-full text-[11px] font-semibold"></span>
+            </div>
+            <div id="convo-actions" class="hidden flex items-center gap-2">
+                <button id="btn-claim-ticket" class="hidden px-3.5 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-full text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    <span>Claim Ticket</span>
+                </button>
+                <button id="btn-close-ticket" class="px-3.5 py-1.5 bg-[#111827] hover:bg-[#1f2937] text-white rounded-full text-xs font-semibold transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    <span>Close</span>
+                </button>
+                <button id="btn-details-drawer" class="px-3 py-1.5 border border-[#e5e7eb] hover:bg-[#f9fafb] text-[#4b5563] rounded-lg text-xs font-semibold transition">
+                    Details
+                </button>
+            </div>
+        </div>
+
+        <!-- Conversation Feed -->
+        <div id="convo-feed" class="flex-1 p-6 overflow-y-auto space-y-4 bg-white">
+            <div class="h-full flex flex-col items-center justify-center text-center text-xs text-[#9ca3af]">
+                <p>Silakan pilih percakapan dari kolom sebelah kiri untuk mulai membaca dan membalas.</p>
+            </div>
+        </div>
+
+        <!-- Reply Composer (Intercom Composer Style) -->
+        <div id="composer-container" class="p-4 border-t border-[#e5e7eb] bg-white">
+            <div class="border border-[#e5e7eb] rounded-xl overflow-hidden focus-within:border-[#9ca3af] transition">
+                <div class="px-3 py-2 border-b border-[#f3f4f6] flex items-center justify-between text-xs text-[#6b7280]">
+                    <div class="flex items-center gap-2 font-semibold text-[#111827]">
+                        <span>Reply</span>
+                        <svg class="w-3 h-3 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <span class="text-[11px] text-[#9ca3af]">Use ⌘K for shortcuts</span>
+                </div>
+                <textarea id="composer-input" rows="3" placeholder="Tulis balasan untuk pelanggan..." class="w-full px-3 py-2 text-sm text-[#111827] placeholder-[#9ca3af] outline-none resize-none" disabled></textarea>
+                <div class="px-3 py-2 bg-[#fcfcfd] border-t border-[#f3f4f6] flex items-center justify-between">
+                    <div class="flex items-center gap-3 text-[#9ca3af]">
+                        <button id="btn-quick-macro" class="hover:text-[#4b5563] text-xs font-medium flex items-center gap-1" title="Pesan Cepat">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            <span>Macro</span>
+                        </button>
+                    </div>
+                    <button id="btn-send-reply" class="px-4 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5" disabled>
+                        <span>Send</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COLUMN 3: COPILOT 2 ASSISTANT PANEL (Intercom Copilot Style) -->
+    <aside class="w-96 bg-[#fcfcfd] flex flex-col flex-shrink-0">
+        <!-- Copilot Header -->
+        <div class="h-14 px-5 border-b border-[#e5e7eb] flex items-center justify-between bg-white">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#0284c7]"></span>
+                <h3 class="font-bold text-sm text-[#111827]">Copilot</h3>
+            </div>
+            <span class="text-xs text-[#9ca3af] font-medium">Assistant AI</span>
+        </div>
+
+        <div class="px-5 py-2.5 border-b border-[#f3f4f6] text-[11px] text-[#6b7280]">
+            <span>Read conversation, searched Knowledge Base &gt;</span>
+        </div>
+
+        <!-- Copilot Body -->
+        <div id="copilot-body" class="flex-1 p-5 overflow-y-auto space-y-5">
+            <!-- What Happened Card -->
+            <div class="space-y-1.5">
+                <h4 class="text-xs font-bold text-[#111827]">What happened</h4>
+                <div id="copilot-summary-text" class="text-xs text-[#4b5563] leading-relaxed bg-white p-3.5 rounded-xl border border-[#e5e7eb] shadow-sm">
+                    Pilih percakapan aktif untuk memuat ringkasan kendala dari Copilot.
+                </div>
+            </div>
+
+            <!-- Draft Reply Card -->
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-[#111827]">Draft reply</h4>
+                <div class="bg-white p-3.5 rounded-xl border border-[#e5e7eb] shadow-sm space-y-3">
+                    <p id="copilot-draft-text" class="text-xs text-[#111827] leading-relaxed">
+                        Copilot akan menyusun draf balasan otomatis berdasarkan basis pengetahuan dan konteks percakapan.
+                    </p>
+                    <div class="pt-2 border-t border-[#f3f4f6] flex items-center justify-between">
+                        <span class="text-[11px] text-[#9ca3af]">2 sources</span>
+                        <button id="btn-copilot-send" class="px-4 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-full text-xs font-semibold shadow-sm transition">
+                            Send to Customer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Follow Ups Card -->
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-[#111827]">Follow ups</h4>
+                <div id="copilot-followups" class="space-y-1.5">
+                    <div class="text-xs text-[#4b5563] bg-white p-2.5 rounded-lg border border-[#e5e7eb]">
+                        1. Verifikasi status akun pengguna
+                    </div>
+                    <div class="text-xs text-[#4b5563] bg-white p-2.5 rounded-lg border border-[#e5e7eb]">
+                        2. Tandai percakapan sebagai Selesai
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copilot Query Input -->
+        <div class="p-4 border-t border-[#e5e7eb] bg-white">
+            <div class="relative">
+                <input type="text" id="copilot-ask-input" placeholder="Ask Copilot about this conversation..." class="w-full pl-3 pr-9 py-2 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg text-xs text-[#111827] placeholder-[#9ca3af] outline-none focus:border-[#0284c7] transition">
+                <button id="btn-copilot-ask" class="absolute right-2 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#0284c7] transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- DETAILS DRAWER (Slide-over panel) -->
+    <div id="details-drawer" class="fixed inset-0 z-50 hidden">
+        <div id="details-backdrop" class="absolute inset-0 bg-black/30 backdrop-blur-[2px]"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-96 bg-white shadow-2xl border-l border-[#e5e7eb] flex flex-col p-6 overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-[#e5e7eb]">
+                <h3 class="font-bold text-sm text-[#111827]">Ticket Details</h3>
+                <button id="btn-close-details" class="p-1 rounded-lg text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="mt-6 space-y-5 text-xs">
+                <div>
+                    <label class="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-wider">Ticket ID</label>
+                    <p id="dt-ticket-id" class="mt-1 font-mono text-[#374151] select-all bg-[#f9fafb] p-2 rounded border border-[#e5e7eb]">-</p>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-wider">Customer Name</label>
+                    <p id="dt-customer-name" class="mt-1 font-bold text-[#111827]">-</p>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-wider">Customer Email</label>
+                    <p id="dt-customer-email" class="mt-1 text-[#4b5563]">-</p>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-wider">Subject</label>
+                    <p id="dt-subject" class="mt-1 text-[#111827] leading-relaxed">-</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-wider">Status</label>
+                        <p id="dt-status" class="mt-1 font-semibold text-[#111827]">-</p>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-wider">Category</label>
+                        <p id="dt-category" class="mt-1 font-semibold text-[#111827]">-</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-wider">Assigned Agent</label>
+                    <p id="dt-agent-name" class="mt-1 text-[#4b5563]">-</p>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-wider">Created At</label>
+                    <p id="dt-created-at" class="mt-1 text-[#6b7280]">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MACRO / QUICK REPLY MODAL -->
+    <div id="macro-modal" class="fixed inset-0 z-50 hidden">
+        <div id="macro-backdrop" class="absolute inset-0 bg-black/30 backdrop-blur-[2px]"></div>
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] bg-white rounded-2xl shadow-2xl border border-[#e5e7eb] p-6">
+            <div class="flex items-center justify-between pb-3 border-b border-[#e5e7eb]">
+                <h3 class="font-bold text-sm text-[#111827]">Canned Responses (Macros)</h3>
+                <button id="btn-close-macro" class="p-1 rounded-lg text-[#6b7280] hover:bg-[#f3f4f6]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="mt-4 space-y-2 max-h-80 overflow-y-auto">
+                <button class="macro-item w-full text-left p-3 rounded-xl border border-[#e5e7eb] hover:bg-[#f9fafb] hover:border-[#0284c7] transition" data-text="Halo, terima kasih telah menghubungi Tim Support CIHEUL. Mohon berikan informasi detail akun atau screenshot kendala agar dapat kami bantu verifikasi.">
+                    <p class="font-bold text-xs text-[#111827]">Sapaan Awal & Permintaan Detail Kendala</p>
+                    <p class="text-[11px] text-[#6b7280] truncate mt-1">Halo, terima kasih telah menghubungi Tim Support CIHEUL. Mohon berikan informasi...</p>
+                </button>
+                <button class="macro-item w-full text-left p-3 rounded-xl border border-[#e5e7eb] hover:bg-[#f9fafb] hover:border-[#0284c7] transition" data-text="Kami telah memverifikasi laporan Anda dan meneruskannya ke tim teknis untuk pengecekan lebih lanjut. Kami akan mengabari Anda segera setelah ada perkembangan.">
+                    <p class="font-bold text-xs text-[#111827]">Eskalasi ke Tim Teknis Internal</p>
+                    <p class="text-[11px] text-[#6b7280] truncate mt-1">Kami telah memverifikasi laporan Anda dan meneruskannya ke tim teknis...</p>
+                </button>
+                <button class="macro-item w-full text-left p-3 rounded-xl border border-[#e5e7eb] hover:bg-[#f9fafb] hover:border-[#0284c7] transition" data-text="Apakah kendala yang Anda alami sudah teratasi dengan baik? Jika tidak ada pertanyaan lain, kami akan menandai tiket konsultasi ini sebagai Selesai.">
+                    <p class="font-bold text-xs text-[#111827]">Konfirmasi Penyelesaian Kendala</p>
+                    <p class="text-[11px] text-[#6b7280] truncate mt-1">Apakah kendala yang Anda alami sudah teratasi dengan baik? Jika tidak ada...</p>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AGENT PROFILE POPOVER -->
+    <div id="agent-popover" class="fixed left-16 bottom-4 z-40 hidden w-64 bg-white rounded-xl shadow-xl border border-[#e5e7eb] p-4 text-xs">
+        <div class="pb-3 border-b border-[#f3f4f6]">
+            <p id="popover-agent-name" class="font-bold text-[#111827]">-</p>
+            <p id="popover-agent-email" class="text-[11px] text-[#6b7280] mt-0.5">-</p>
+            <span id="popover-agent-role" class="inline-block mt-2 px-2 py-0.5 bg-[#e0f2fe] text-[#0369a1] text-[10px] font-bold rounded-full">-</span>
+        </div>
+        <div class="mt-3 flex flex-col gap-2">
+            <button id="btn-switch-account" class="w-full py-1.5 px-2.5 text-left text-[#4b5563] hover:bg-[#f9fafb] hover:text-[#111827] rounded-lg transition font-medium">Ganti Akun</button>
+            <button id="btn-logout" class="w-full py-1.5 px-2.5 text-left text-red-600 hover:bg-red-50 rounded-lg transition font-medium">Keluar (Logout)</button>
+        </div>
+    </div>
+
+    <!-- AUTHENTICATION LOGIN MODAL -->
+    <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[3px] hidden">
+        <div class="w-[420px] bg-white rounded-2xl shadow-2xl border border-[#e5e7eb] p-7">
+            <div class="flex items-center gap-3 mb-6">
+                <img src="/dashboard/assets/ciheul-logo.png" alt="CIHEUL Logo" class="w-9 h-9 object-contain rounded-lg" />
+                <div>
+                    <h2 class="text-base font-bold text-[#111827]">Masuk ke Helpdesk</h2>
+                    <p class="text-xs text-[#6b7280]">CIHEUL Technologies Omnichannel Support</p>
+                </div>
+            </div>
+
+            <div id="login-error-alert" class="hidden mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl"></div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-[#374151] mb-1.5">Email Staf</label>
+                    <input type="email" id="login-email" required placeholder="cs@ciheul.com" class="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-xs text-[#111827] outline-none focus:border-[#0284c7] focus:bg-white transition" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#374151] mb-1.5">Kata Sandi</label>
+                    <input type="password" id="login-password" required placeholder="Masukkan kata sandi" class="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-xs text-[#111827] outline-none focus:border-[#0284c7] focus:bg-white transition" />
+                </div>
+                <button type="submit" id="btn-submit-login" class="w-full py-2.5 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                    Masuk
+                </button>
+            </form>
+
+            <div class="mt-5 pt-4 border-t border-[#f3f4f6]">
+                <p class="text-[11px] font-medium text-[#9ca3af] mb-2 text-center">Akun Demo Pengujian Cepat</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btn-fill-cs" class="py-1.5 px-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#374151] text-[11px] font-semibold rounded-lg transition text-center">
+                        Isi CS Support
+                    </button>
+                    <button id="btn-fill-admin" class="py-1.5 px-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#374151] text-[11px] font-semibold rounded-lg transition text-center">
+                        Isi Administrator
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/dashboard/js/app.js"></script>
+</body>
+</html>

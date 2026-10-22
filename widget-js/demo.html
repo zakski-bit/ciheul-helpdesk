@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Host Store - Embedded CIHEUL Chat Widget</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #0b0f19;
+            color: #f1f5f9;
+        }
+        header {
+            background: #111827;
+            border-bottom: 1px solid #1f2937;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-weight: 700;
+            font-size: 20px;
+            color: #38bdf8;
+            letter-spacing: -0.5px;
+        }
+        .hero {
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 38px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 16px;
+        }
+        .hero p {
+            font-size: 18px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: left;
+        }
+        .card h3 {
+            color: #38bdf8;
+            margin-top: 0;
+            font-size: 18px;
+        }
+        .card p {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .badge-live {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Acme SaaS Corp</div>
+        <div>
+            <a href="/dashboard/index.html" style="color: #38bdf8; text-decoration: none; font-size: 14px; font-weight: 600; border: 1px solid #0284c7; padding: 8px 16px; border-radius: 8px;">Buka Web Dashboard CS &rarr;</a>
+        </div>
+    </header>
+
+    <div class="hero">
+        <span class="badge-live">Live Chat Widget Simulation</span>
+        <h1>Platform Helpdesk Omnichannel Berkecepatan Tinggi</h1>
+        <p>Halaman ini mensimulasikan website pihak ketiga yang menyematkan <strong>CIHEUL Live Chat Widget</strong> di pojok kanan bawah. Coba klik ikon chat di kanan bawah untuk menguji respons otomatis AI dan eskalasi ke CS manusia secara real-time.</p>
+    </div>
+
+    <div class="cards">
+        <div class="card">
+            <h3>Automated AI Triage</h3>
+            <p>Pertanyaan umum seperti <em>"Bagaimana cara reset password?"</em> atau <em>"Metode pembayaran apa saja?"</em> akan dijawab langsung oleh AI secara otomatis.</p>
+        </div>
+        <div class="card">
+            <h3>Always-Connected Hub</h3>
+            <p>WebSocket 3-arah menghubungkan Widget, Web Dashboard CS, dan Mobile App CS secara instan dengan auto-reconnect.</p>
+        </div>
+        <div class="card">
+            <h3>Human Escalation</h3>
+            <p>Jika AI bot tidak menemukan jawaban atau pelanggan menekan tombol <em>"Hubungi CS"</em>, tiket otomatis dialihkan ke antrean agen manusia.</p>
+        </div>
+    </div>
+
+    <!-- CIHEUL LIVE CHAT WIDGET EMBED CODE -->
+    <script src="/widget/dist/widget.js"></script>
+</body>
+</html>

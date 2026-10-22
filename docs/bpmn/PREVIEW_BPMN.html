@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview BPMN Swimlane - CIHEUL Helpdesk System</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 30px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+        }
+        h1 {
+            color: #38bdf8;
+            margin-top: 0;
+            font-size: 22px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 12px;
+        }
+        .info-box {
+            background: #0f172a;
+            border-left: 4px solid #38bdf8;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+        .mermaid {
+            background: #090d16;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .btn-print {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .btn-print:hover {
+            background: #0369a1;
+        }
+        @media print {
+            body { background: white; color: black; padding: 0; }
+            .container { box-shadow: none; border: none; background: white; }
+            .btn-print, .info-box { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>BPMN Swimlane Diagram: Omnichannel Helpdesk & Live Support</h1>
+        <div class="info-box">
+            <strong>Petunjuk Konversi PDF (Soal 1a):</strong>
+            <ol style="margin: 8px 0 0 0; padding-left: 20px;">
+                <li>Buka file <code>helpdesk_process_swimlane.drawio</code> di <a href="https://app.diagrams.net" target="_blank" style="color: #38bdf8;">app.diagrams.net (draw.io)</a> atau Draw.io Desktop.</li>
+                <li>Pilih menu <strong>File &rarr; Export as &rarr; PDF...</strong> lalu simpan sebagai <code>helpdesk_process_swimlane.pdf</code>.</li>
+                <li>Atau gunakan tombol print halaman preview ini dan pilih <em>Save as PDF</em>.</li>
+            </ol>
+            <button class="btn-print" onclick="window.print()">Cetak / Simpan Halaman Ini Sebagai PDF</button>
+        </div>
+
+        <div class="mermaid">
+sequenceDiagram
+    autonumber
+    box rgb(15, 23, 42) Pelanggan (Customer / End-User)
+    actor C as Pelanggan
+    end
+    box rgb(30, 27, 75) Sistem AI Helpdesk (Bot Assistant)
+    participant B as AI Bot Engine
+    end
+    box rgb(8, 47, 73) Customer Support (CS Agent - Web & Mobile)
+    actor CS as Agen CS
+    end
+    box rgb(49, 16, 75) Supervisor / Technical Lead (L2)
+    actor S as Supervisor L2
+    end
+
+    C->>B: 1. Buka Chat Widget & kirim keluhan kendala
+    Note over B: Evaluasi pesan & pencocokan FAQ Knowledge Base
+    
+    alt Relevansi AI Tinggi (Confidence >= 75%)
+        B-->>C: 2. Kirim solusi otomatis + Opsi "Bicara CS"
+        C->>C: Coba solusi dari AI
+        alt Masalah Berhasil Selesai
+            C->>B: 3. Konfirmasi "Masalah Selesai" & beri rating 5★
+            Note over B: Tiket Closed (Diselesaikan Bot)
+        else Belum Selesai / Masalah Berlanjut
+            C->>B: 4. Klik "Hubungi CS Manusia"
+        end
+    else Relevansi Rendah / Pertanyaan Kompleks
+        Note over B: Otomatis memicu eskalasi
+    end
+
+    Note over B: Trigger Handoff: Status WAITING_AGENT<br/>Broadcast event via WebSocket
+    B-->>CS: 5. Notifikasi tiket eskalasi masuk (Web Dashboard & Mobile Flutter)
+    CS->>B: 6. Klaim Sesi Tiket (Claim Session)
+    Note over B: AI Bot dinonaktifkan untuk sesi ini
+    CS->>C: 7. Live Chat 1-on-1: Troubleshooting langsung dengan pelanggan
+    
+    opt Kendala Teknis Kompleks / Butuh Akses Khusus
+        CS->>S: 8. Eskalasi L2: Minta review log server / bug fix
+        S-->>CS: 9. Memberikan instruksi solusi & persetujuan
+    end
+
+    CS->>C: 10. Sampaikan solusi tuntas & verifikasi hasil
+    CS->>B: 11. Ubah status tiket menjadi RESOLVED
+    C-->>CS: 12. Konfirmasi penyelesaian kendala & berikan ulasan layanan
+    Note over C,S: Selesai: Tiket Ditutup Berhasil
+        </div>
+    </div>
+</body>
+</html>
