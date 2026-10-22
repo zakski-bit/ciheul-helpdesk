@@ -83,11 +83,19 @@ class AIBotService:
                 "matched_kb_id": best_match.id
             }
 
-        # 4. Fallback: Confidence too low -> Escalate to human
+        # 4. Fallback: No confident match in Knowledge Base (Informative guide without premature escalation)
         return {
-            "reply": "Maaf, sistem kami belum memiliki catatan spesifik terkait kendala ini. Sesi obrolan diteruskan ke Customer Support kami.",
+            "reply": (
+                "Maaf, saya belum menemukan jawaban yang tepat untuk pertanyaan tersebut di basis pengetahuan kami.\n\n"
+                "Anda dapat menanyakan informasi seputar:\n"
+                "• Cara reset password dan ubah profil akun\n"
+                "• Metode pembayaran dan refund/pengembalian dana\n"
+                "• Kendala teknis aplikasi mobile\n"
+                "• Profil dan integrasi API CIHEUL\n\n"
+                "Atau ketik 'Hubungi CS' jika Anda ingin terhubung langsung ke Customer Support manusia."
+            ),
             "confidence": 0.2,
-            "should_escalate": True,
+            "should_escalate": False,
             "matched_kb_id": None
         }
 

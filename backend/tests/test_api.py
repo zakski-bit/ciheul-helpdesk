@@ -452,7 +452,7 @@ def test_websocket_rate_limiting():
     create_res = client.post("/api/v1/tickets", json={
         "session_token": "rate_test_sess_3",
         "customer_name": "Rate Tester",
-        "initial_message": "halo rate"
+        "initial_message": "halo tolong cs"
     })
     ticket_id = create_res.json()["id"]
 

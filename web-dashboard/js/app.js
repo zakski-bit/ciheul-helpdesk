@@ -13,6 +13,14 @@
     let currentFilter = "ALL";
     let latestDraftReply = "";
 
+    // 4 Views Navigation & Directory State
+    let currentNavView = "inbox";
+    let allKBItems = [];
+    let currentKBCategory = "ALL";
+    let kbSearchQuery = "";
+    let currentTableFilter = "ALL";
+    let tableSearchQuery = "";
+
     // DOM Elements
     const loginModal = document.getElementById("login-modal");
     const loginForm = document.getElementById("login-form");
@@ -92,6 +100,23 @@
             roleBadge.className = "inline-block mt-2 px-2 py-0.5 bg-[#fef3c7] text-[#92400e] text-[10px] font-bold rounded-full";
         } else {
             roleBadge.className = "inline-block mt-2 px-2 py-0.5 bg-[#e0f2fe] text-[#0369a1] text-[10px] font-bold rounded-full";
+        }
+
+        // Settings view profile elements
+        const settingsAvatar = document.getElementById("settings-avatar");
+        const settingsName = document.getElementById("settings-agent-name");
+        const settingsEmail = document.getElementById("settings-agent-email");
+        const settingsRole = document.getElementById("settings-agent-role");
+        if (settingsAvatar) settingsAvatar.innerText = initials || "CS";
+        if (settingsName) settingsName.innerText = currentAgent.full_name;
+        if (settingsEmail) settingsEmail.innerText = currentAgent.email;
+        if (settingsRole) {
+            settingsRole.innerText = currentAgent.role === "ADMIN" ? "Administrator" : "CS Specialist";
+            if (currentAgent.role === "ADMIN") {
+                settingsRole.className = "px-2.5 py-1 bg-[#fef3c7] text-[#92400e] text-xs font-bold rounded-full";
+            } else {
+                settingsRole.className = "px-2.5 py-1 bg-[#e0f2fe] text-[#0369a1] text-xs font-bold rounded-full";
+            }
         }
     }
 
@@ -227,6 +252,7 @@
             if (res.ok) {
                 allTickets = await res.json();
                 renderConversationList();
+                renderTicketsTable();
             }
         } catch (e) {
             console.error("Failed to load tickets:", e);
@@ -699,6 +725,323 @@
         div.innerText = str;
         return div.innerHTML;
     }
+
+    // 14. Multi-View Navigation Switcher (Inbox, Tickets, KB, Settings)
+    function switchNavView(viewName) {
+        currentNavView = viewName;
+
+        // Toggle app view visibility
+        document.querySelectorAll(".app-view").forEach(el => {
+            el.classList.add("hidden");
+        });
+        const targetView = document.getElementById(`view-${viewName}`);
+        if (targetView) {
+            targetView.classList.remove("hidden");
+        }
+
+        // Update desktop sidebar buttons
+        document.querySelectorAll(".nav-tab-btn").forEach(btn => {
+            if (btn.dataset.view === viewName) {
+                btn.className = "nav-tab-btn w-9 h-9 rounded-lg bg-[#f3f4f6] text-[#111827] flex items-center justify-center font-medium transition";
+            } else {
+                btn.className = "nav-tab-btn w-9 h-9 rounded-lg text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] flex items-center justify-center transition";
+            }
+        });
+
+        // Update mobile bottom nav buttons
+        document.querySelectorAll(".mobile-nav-btn").forEach(btn => {
+            if (btn.dataset.view === viewName) {
+                btn.className = "mobile-nav-btn flex flex-col items-center text-[#111827] font-semibold text-[10px]";
+            } else {
+                btn.className = "mobile-nav-btn flex flex-col items-center text-[#6b7280] text-[10px]";
+            }
+        });
+
+        // Trigger view-specific data refresh
+        if (viewName === "tickets") {
+            renderTicketsTable();
+        } else if (viewName === "kb") {
+            loadKnowledgeBase();
+        } else if (viewName === "settings") {
+            updateAgentUI();
+        }
+    }
+
+    document.querySelectorAll(".nav-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const v = btn.dataset.view;
+            if (v) switchNavView(v);
+        });
+    });
+
+    document.querySelectorAll(".mobile-nav-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const v = btn.dataset.view;
+            if (v) switchNavView(v);
+        });
+    });
+
+    // 15. Tickets Management Table
+    function renderTicketsTable() {
+        const tbody = document.getElementById("tickets-table-body");
+        if (!tbody) return;
+
+        // Update counter chips
+        const countAll = allTickets.length;
+        const countWaiting = allTickets.filter(t => t.status === "WAITING_AGENT").length;
+        const countActive = allTickets.filter(t => t.status === "AGENT_ACTIVE").length;
+        const countResolved = allTickets.filter(t => t.status === "RESOLVED").length;
+        const countClosed = allTickets.filter(t => t.status === "CLOSED").length;
+
+        const cAllEl = document.getElementById("tbl-count-all");
+        const cWaitingEl = document.getElementById("tbl-count-waiting");
+        const cActiveEl = document.getElementById("tbl-count-active");
+        const cResolvedEl = document.getElementById("tbl-count-resolved");
+        const cClosedEl = document.getElementById("tbl-count-closed");
+        if (cAllEl) cAllEl.innerText = countAll;
+        if (cWaitingEl) cWaitingEl.innerText = countWaiting;
+        if (cActiveEl) cActiveEl.innerText = countActive;
+        if (cResolvedEl) cResolvedEl.innerText = countResolved;
+        if (cClosedEl) cClosedEl.innerText = countClosed;
+
+        const q = (tableSearchQuery || "").toLowerCase();
+        const filtered = allTickets.filter(t => {
+            const matchesStatus = (currentTableFilter === "ALL") || (t.status === currentTableFilter);
+            if (!matchesStatus) return false;
+            if (!q) return true;
+            return (
+                (t.id && t.id.toLowerCase().includes(q)) ||
+                (t.customer_name && t.customer_name.toLowerCase().includes(q)) ||
+                (t.customer_email && t.customer_email.toLowerCase().includes(q)) ||
+                (t.subject && t.subject.toLowerCase().includes(q)) ||
+                (t.category && t.category.toLowerCase().includes(q))
+            );
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="py-12 text-center text-xs text-[#9ca3af]">
+                        Tidak ada tiket yang cocok dengan kriteria pencarian atau filter status.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        filtered.forEach(t => {
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-[#f9fafb] transition cursor-pointer";
+
+            let statusBadge = "";
+            if (t.status === "WAITING_AGENT") {
+                statusBadge = `<span class="px-2 py-0.5 bg-[#fef3c7] text-[#92400e] rounded-full text-[10px] font-semibold">Menunggu Agen</span>`;
+            } else if (t.status === "AGENT_ACTIVE") {
+                statusBadge = `<span class="px-2 py-0.5 bg-[#e0f2fe] text-[#0369a1] rounded-full text-[10px] font-semibold">Ditangani</span>`;
+            } else if (t.status === "RESOLVED") {
+                statusBadge = `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-semibold">Selesai</span>`;
+            } else if (t.status === "CLOSED") {
+                statusBadge = `<span class="px-2 py-0.5 bg-[#f3f4f6] text-[#6b7280] rounded-full text-[10px] font-semibold">Ditutup</span>`;
+            } else {
+                statusBadge = `<span class="px-2 py-0.5 bg-[#f3f4f6] text-[#374151] rounded-full text-[10px] font-semibold">${escapeHtml(t.status)}</span>`;
+            }
+
+            const shortId = t.id ? t.id.substring(0, 8) : "-";
+            const timeAgo = getTimeAgo(t.updated_at || t.created_at);
+
+            tr.innerHTML = `
+                <td class="py-3 px-4 font-mono text-[11px] text-[#0284c7] font-semibold select-all">${shortId}</td>
+                <td class="py-3 px-4">
+                    <p class="font-bold text-[#111827]">${escapeHtml(t.customer_name || "Tamu")}</p>
+                    <p class="text-[11px] text-[#6b7280]">${escapeHtml(t.customer_email || "Tidak ada email")}</p>
+                </td>
+                <td class="py-3 px-4 max-w-xs">
+                    <p class="font-semibold text-[#111827] truncate">${escapeHtml(t.subject || "-")}</p>
+                    <p class="text-[11px] text-[#6b7280] truncate mt-0.5">${escapeHtml(t.last_message || "-")}</p>
+                </td>
+                <td class="py-3 px-4">
+                    <span class="px-2 py-0.5 bg-[#f3f4f6] text-[#4b5563] rounded text-[10px] font-medium">${escapeHtml(t.category || "GENERAL")}</span>
+                </td>
+                <td class="py-3 px-4">${statusBadge}</td>
+                <td class="py-3 px-4 text-[#4b5563]">${escapeHtml(t.agent_name || "Belum ditugaskan")}</td>
+                <td class="py-3 px-4 text-[#9ca3af] whitespace-nowrap">${timeAgo}</td>
+                <td class="py-3 px-4 text-right">
+                    <button class="btn-table-open px-3 py-1 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-lg text-xs font-semibold shadow-sm transition" data-id="${t.id}">
+                        Buka di Inbox
+                    </button>
+                </td>
+            `;
+
+            const btnOpen = tr.querySelector(".btn-table-open");
+            if (btnOpen) {
+                btnOpen.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    selectTicket(t.id);
+                    switchNavView("inbox");
+                });
+            }
+
+            tr.addEventListener("click", () => {
+                selectTicket(t.id);
+                switchNavView("inbox");
+            });
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Tickets table search & status filters
+    const ticketsTableSearch = document.getElementById("tickets-table-search");
+    if (ticketsTableSearch) {
+        ticketsTableSearch.addEventListener("input", (e) => {
+            tableSearchQuery = e.target.value.trim();
+            renderTicketsTable();
+        });
+    }
+
+    const btnRefreshTickets = document.getElementById("btn-refresh-tickets");
+    if (btnRefreshTickets) {
+        btnRefreshTickets.addEventListener("click", () => {
+            loadTickets();
+        });
+    }
+
+    document.querySelectorAll(".tbl-filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".tbl-filter-btn").forEach(b => {
+                b.className = "tbl-filter-btn px-3 py-1 rounded-full font-medium text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] transition";
+            });
+            btn.className = "tbl-filter-btn px-3 py-1 rounded-full font-semibold bg-[#111827] text-white transition";
+            currentTableFilter = btn.dataset.status;
+            renderTicketsTable();
+        });
+    });
+
+    // 16. Knowledge Base Loader & Renderer
+    async function loadKnowledgeBase() {
+        const grid = document.getElementById("kb-cards-grid");
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/knowledge-base`);
+            if (res.ok) {
+                allKBItems = await res.json();
+                renderKBCards();
+            } else {
+                if (grid) grid.innerHTML = `<div class="col-span-full py-12 text-center text-xs text-red-500">Gagal memuat basis pengetahuan.</div>`;
+            }
+        } catch (e) {
+            console.error(e);
+            if (grid) grid.innerHTML = `<div class="col-span-full py-12 text-center text-xs text-red-500">Gagal terhubung ke server basis pengetahuan.</div>`;
+        }
+    }
+
+    function renderKBCards() {
+        const grid = document.getElementById("kb-cards-grid");
+        if (!grid) return;
+
+        const countAllEl = document.getElementById("kb-count-all");
+        if (countAllEl) countAllEl.innerText = allKBItems.length;
+
+        const q = (kbSearchQuery || "").toLowerCase();
+        const filtered = allKBItems.filter(item => {
+            const matchesCat = (currentKBCategory === "ALL") || (item.category === currentKBCategory);
+            if (!matchesCat) return false;
+            if (!q) return true;
+            return (
+                (item.question && item.question.toLowerCase().includes(q)) ||
+                (item.answer && item.answer.toLowerCase().includes(q)) ||
+                (item.keywords && item.keywords.toLowerCase().includes(q))
+            );
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div class="col-span-full py-12 text-center text-xs text-[#9ca3af]">Tidak ada artikel solusi yang cocok dengan pencarian.</div>`;
+            return;
+        }
+
+        grid.innerHTML = "";
+        filtered.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "bg-white p-4 rounded-xl border border-[#e5e7eb] shadow-sm flex flex-col justify-between hover:border-[#0284c7] transition";
+
+            let catLabel = item.category;
+            let catClass = "bg-[#f3f4f6] text-[#4b5563]";
+            if (item.category === "ACCOUNT") {
+                catLabel = "Akun & Akses";
+                catClass = "bg-[#e0f2fe] text-[#0369a1]";
+            } else if (item.category === "BILLING") {
+                catLabel = "Tagihan & Pembayaran";
+                catClass = "bg-[#fef3c7] text-[#92400e]";
+            } else if (item.category === "TECHNICAL") {
+                catLabel = "Teknis & API";
+                catClass = "bg-purple-50 text-purple-700";
+            } else if (item.category === "GENERAL") {
+                catLabel = "Umum & Kebijakan";
+                catClass = "bg-emerald-50 text-emerald-700";
+            }
+
+            const keywordsArray = item.keywords ? item.keywords.split(" ").filter(Boolean) : [];
+            const keywordsBadges = keywordsArray.slice(0, 5).map(kw => `<span class="px-1.5 py-0.5 bg-[#f9fafb] border border-[#e5e7eb] rounded text-[10px] text-[#6b7280]">${escapeHtml(kw)}</span>`).join(" ");
+
+            card.innerHTML = `
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${catClass}">${catLabel}</span>
+                        <span class="text-[10px] text-[#9ca3af] font-medium">${item.helpful_count || 0}x digunakan</span>
+                    </div>
+                    <h3 class="font-bold text-xs text-[#111827] leading-snug mb-2">${escapeHtml(item.question)}</h3>
+                    <p class="text-xs text-[#4b5563] leading-relaxed mb-3">${escapeHtml(item.answer)}</p>
+                </div>
+                <div class="pt-3 border-t border-[#f3f4f6] flex items-center justify-between gap-2">
+                    <div class="flex flex-wrap gap-1 max-w-[70%]">
+                        ${keywordsBadges}
+                    </div>
+                    <button class="btn-copy-kb px-2.5 py-1 text-[11px] font-semibold text-[#0284c7] hover:bg-[#f0f9ff] rounded transition flex items-center gap-1" data-answer="${escapeHtml(item.answer)}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <span>Salin</span>
+                    </button>
+                </div>
+            `;
+
+            const btnCopy = card.querySelector(".btn-copy-kb");
+            if (btnCopy) {
+                btnCopy.addEventListener("click", function () {
+                    const answer = this.dataset.answer;
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(answer).then(() => {
+                            const span = this.querySelector("span");
+                            if (span) {
+                                const prev = span.innerText;
+                                span.innerText = "Tersalin";
+                                setTimeout(() => { span.innerText = prev; }, 1500);
+                            }
+                        }).catch(() => {});
+                    }
+                });
+            }
+
+            grid.appendChild(card);
+        });
+    }
+
+    const kbSearchInput = document.getElementById("kb-search-input");
+    if (kbSearchInput) {
+        kbSearchInput.addEventListener("input", (e) => {
+            kbSearchQuery = e.target.value.trim();
+            renderKBCards();
+        });
+    }
+
+    document.querySelectorAll(".kb-cat-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".kb-cat-btn").forEach(b => {
+                b.className = "kb-cat-btn px-3 py-1 rounded-full font-medium text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] transition";
+            });
+            btn.className = "kb-cat-btn px-3 py-1 rounded-full font-semibold bg-[#111827] text-white transition";
+            currentKBCategory = btn.dataset.category;
+            renderKBCards();
+        });
+    });
 
     // Initialize
     checkAuthentication();

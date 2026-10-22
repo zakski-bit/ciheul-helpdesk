@@ -94,16 +94,20 @@ jobs:
             echo "keyPassword=ciheul_keystore_pass123" >> key.properties
             echo "storeFile=ciheul-release.jks" >> key.properties
             echo "storePassword=ciheul_keystore_pass123" >> key.properties
+            cp key.properties app/key.properties || true
+            cp ciheul-release.jks app/ciheul-release.jks || true
           fi
 
       - name: Build CI APK
         working-directory: mobile-flutter
+        env:
+          STRICT_RELEASE: "false"
         run: flutter build apk --release
 
       - name: Cleanup CI Keystore Files
         if: always()
         run: |
-          rm -f mobile-flutter/android/ciheul-release.jks mobile-flutter/android/key.properties
+          rm -f mobile-flutter/android/ciheul-release.jks mobile-flutter/android/key.properties mobile-flutter/android/app/ciheul-release.jks mobile-flutter/android/app/key.properties
 
       - name: Upload CI APK Artifact
         uses: actions/upload-artifact@v4
@@ -159,6 +163,8 @@ jobs:
           echo "keyPassword=${KEY_PASSWORD}" >> key.properties
           echo "storeFile=ciheul-release.jks" >> key.properties
           echo "storePassword=${STORE_PASSWORD}" >> key.properties
+          cp key.properties app/key.properties || true
+          cp ciheul-release.jks app/ciheul-release.jks || true
 
       - name: Build Official Release APK
         working-directory: mobile-flutter
@@ -167,7 +173,7 @@ jobs:
       - name: Cleanup Keystore Files
         if: always()
         run: |
-          rm -f mobile-flutter/android/ciheul-release.jks mobile-flutter/android/key.properties
+          rm -f mobile-flutter/android/ciheul-release.jks mobile-flutter/android/key.properties mobile-flutter/android/app/ciheul-release.jks mobile-flutter/android/app/key.properties
 
       - name: Publish Official GitHub Release
         uses: softprops/action-gh-release@v2.0.8
