@@ -1,12 +1,26 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AppConstants {
   // Configurable API & WebSocket URLs
-  // For Android emulator: 10.0.2.2; For Windows desktop or web: localhost; For Physical device: your LAN IP (e.g. 192.168.1.X)
-  static String host = "10.0.2.2:8000"; 
+  // In release/production mode, enforce secure https and wss protocols
+  static const bool isProduction = kReleaseMode;
   
-  static String get apiBaseUrl => "http://$host";
-  static String get wsBaseUrl => "ws://$host";
+  // For Android emulator: 10.0.2.2:8000; For Windows desktop: localhost:8000; For Production: api.ciheul.com
+  static String devHost = const String.fromEnvironment('API_HOST', defaultValue: '10.0.2.2:8000');
+  static String prodHost = const String.fromEnvironment('PROD_API_HOST', defaultValue: 'api.ciheul.com');
+
+  static String get host => isProduction ? prodHost : devHost;
+  static set host(String value) {
+    if (!isProduction) {
+      devHost = value;
+    }
+  }
+  static String get protocol => isProduction ? 'https' : 'http';
+  static String get wsProtocol => isProduction ? 'wss' : 'ws';
+
+  static String get apiBaseUrl => "$protocol://$host";
+  static String get wsBaseUrl => "$wsProtocol://$host";
 
   // Corporate Slate Dark Theme Colors
   static const Color bgDark = Color(0xFF060A12);

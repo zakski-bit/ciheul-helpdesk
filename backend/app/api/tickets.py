@@ -72,7 +72,7 @@ def get_active_ticket_for_widget(session_token: str, db: Session = Depends(get_d
     return TicketDetailResponse(
         id=ticket.id,
         customer_id=ticket.customer_id,
-        assigned_agent_id=ticket.assigned_agent_id,
+        assigned_agent_id=None,  # Mask internal staff UUID from customer/widget
         subject=ticket.subject,
         category=ticket.category,
         status=ticket.status,
@@ -125,7 +125,7 @@ async def create_ticket_from_widget(data: TicketCreate, db: Session = Depends(ge
     return TicketDetailResponse(
         id=ticket.id,
         customer_id=ticket.customer_id,
-        assigned_agent_id=ticket.assigned_agent_id,
+        assigned_agent_id=None,  # Mask internal staff UUID from customer/widget
         subject=ticket.subject,
         category=ticket.category,
         status=ticket.status,
@@ -165,9 +165,17 @@ def get_ticket_detail(ticket_id: str, db: Session = Depends(get_db), current_use
 
 @router.post("/{ticket_id}/claim", response_model=TicketResponse)
 async def claim_ticket(ticket_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    existing = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Tiket tidak ditemukan")
+    if existing.status in ["RESOLVED", "CLOSED"]:
+        raise HTTPException(status_code=400, detail="Tiket yang telah selesai tidak dapat diklaim kembali")
+    if existing.assigned_agent_id and existing.assigned_agent_id != current_user.id and current_user.role != "ADMIN":
+        raise HTTPException(status_code=409, detail="Tiket ini telah ditugaskan ke staf lain")
+
     ticket = TicketService.claim_ticket(db, ticket_id, current_user.id)
     if not ticket:
-        raise HTTPException(status_code=404, detail="Tiket tidak ditemukan")
+        raise HTTPException(status_code=400, detail="Gagal mengklaim tiket")
     
     # Broadcast to room and agents
     await ws_manager.broadcast_to_ticket(ticket.id, {
@@ -207,6 +215,8 @@ async def escalate_ticket(
     ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Tiket tidak ditemukan")
+    if ticket.status in ["RESOLVED", "CLOSED"]:
+        raise HTTPException(status_code=400, detail="Tiket yang telah selesai tidak dapat dialihkan ke eskalasi")
     
     # Ownership verification: must be authenticated agent OR customer matching session_token
     token_to_check = (data.session_token if data and data.session_token else None) or session_token
@@ -216,7 +226,9 @@ async def escalate_ticket(
             token = authorization.split(" ")[1]
             payload = decode_access_token(token)
             if payload and "sub" in payload:
-                is_authenticated_agent = True
+                agent_user = db.query(User).filter(User.id == payload["sub"], User.is_active == True).first()
+                if agent_user and agent_user.role in ["CS_AGENT", "ADMIN"]:
+                    is_authenticated_agent = True
         except Exception:
             pass
 
@@ -229,7 +241,7 @@ async def escalate_ticket(
 
     ticket = TicketService.escalate_ticket(db, ticket_id)
     if not ticket:
-        raise HTTPException(status_code=404, detail="Tiket tidak ditemukan")
+        raise HTTPException(status_code=400, detail="Gagal melakukan eskalasi tiket")
     
     await ws_manager.broadcast_to_ticket(ticket.id, {
         "event": "ticket_escalated",
@@ -247,9 +259,15 @@ async def escalate_ticket(
 
 @router.post("/{ticket_id}/resolve", response_model=TicketResponse)
 async def resolve_ticket(ticket_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    existing = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Tiket tidak ditemukan")
+    if existing.status in ["RESOLVED", "CLOSED"]:
+        raise HTTPException(status_code=400, detail="Tiket sudah dalam status selesai")
+
     ticket = TicketService.resolve_ticket(db, ticket_id)
     if not ticket:
-        raise HTTPException(status_code=404, detail="Tiket tidak ditemukan")
+        raise HTTPException(status_code=400, detail="Gagal menyelesaikan tiket")
     
     await ws_manager.broadcast_to_ticket(ticket.id, {
         "event": "ticket_resolved",

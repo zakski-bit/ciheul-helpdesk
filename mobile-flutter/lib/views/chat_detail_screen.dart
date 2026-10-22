@@ -75,9 +75,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   void _connectRoomWebSocket() {
+    if (!mounted) return;
     try {
       final wsUrl = Uri.parse("${AppConstants.wsBaseUrl}/ws/ticket/${widget.ticketId}?token=${Uri.encodeComponent(widget.token)}");
       _roomChannel = WebSocketChannel.connect(wsUrl);
+
+      if (_messages.isNotEmpty) {
+        _roomChannel!.sink.add(jsonEncode({
+          "event": "sync_missed",
+          "last_message_id": _messages.last.id,
+        }));
+      }
 
       _roomChannel!.stream.listen(
         (message) {
@@ -85,10 +93,26 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             final data = jsonDecode(message);
             final event = data['event'];
             if (event == 'new_message') {
-              setState(() {
-                _messages.add(ChatMessage.fromJson(data));
-              });
-              _scrollToBottom();
+              final newMsg = ChatMessage.fromJson(data);
+              if (!_messages.any((m) => m.id == newMsg.id)) {
+                setState(() {
+                  _messages.add(newMsg);
+                });
+                _scrollToBottom();
+              }
+            } else if (event == 'sync_result' && data['messages'] != null) {
+              final List msgList = data['messages'];
+              if (msgList.isNotEmpty) {
+                setState(() {
+                  for (var m in msgList) {
+                    final msgObj = ChatMessage.fromJson(m);
+                    if (!_messages.any((existing) => existing.id == msgObj.id)) {
+                      _messages.add(msgObj);
+                    }
+                  }
+                });
+                _scrollToBottom();
+              }
             } else if (event == 'ticket_claimed') {
               setState(() => _status = "AGENT_ACTIVE");
             } else if (event == 'ticket_resolved') {
@@ -97,10 +121,21 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           } catch (_) {}
         },
         onError: (_) {
-          Future.delayed(const Duration(seconds: 3), _connectRoomWebSocket);
+          if (mounted) {
+            Future.delayed(const Duration(seconds: 3), _connectRoomWebSocket);
+          }
+        },
+        onDone: () {
+          if (mounted) {
+            Future.delayed(const Duration(seconds: 3), _connectRoomWebSocket);
+          }
         },
       );
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) {
+        Future.delayed(const Duration(seconds: 3), _connectRoomWebSocket);
+      }
+    }
   }
 
   void _scrollToBottom() {

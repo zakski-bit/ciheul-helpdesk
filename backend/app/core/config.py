@@ -7,26 +7,32 @@ class Settings:
     PROJECT_NAME: str = "CIHEUL Omnichannel Helpdesk API"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
-    
-    _DEFAULT_SECRET = "ciheul-secret-key-3489274982374982374"
-    SECRET_KEY: str = os.getenv("SECRET_KEY", _DEFAULT_SECRET)
-    if ENVIRONMENT == "production" and SECRET_KEY == _DEFAULT_SECRET:
-        logger.warning("CRITICAL SECURITY WARNING: Production environment is using default SECRET_KEY! Set SECRET_KEY via environment variable.")
-
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
-    
-    # SQLite default, easily switchable to PostgreSQL via env var
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./helpdesk.db")
-    
-    # Seed credentials
-    ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "admin@ciheul.com")
-    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "admin123")
-    CS_EMAIL: str = os.getenv("CS_EMAIL", "cs@ciheul.com")
-    CS_PASSWORD: str = os.getenv("CS_PASSWORD", "cs123")
-    
-    # CORS
-    BACKEND_CORS_ORIGINS: list = ["*"]
+    _DEFAULT_SECRET: str = "ciheul-secret-key-3489274982374982374"
+
+    def __init__(self):
+        self.ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+        self.SECRET_KEY: str = os.getenv("SECRET_KEY", self._DEFAULT_SECRET)
+        self.ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "admin@ciheul.com")
+        self.ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "admin123")
+        self.CS_EMAIL: str = os.getenv("CS_EMAIL", "cs@ciheul.com")
+        self.CS_PASSWORD: str = os.getenv("CS_PASSWORD", "cs123")
+        self.DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./helpdesk.db")
+
+        # Strict production safeguards
+        if self.ENVIRONMENT == "production":
+            if self.SECRET_KEY == self._DEFAULT_SECRET or len(self.SECRET_KEY) < 32:
+                raise RuntimeError("FATAL SECURITY ERROR: Production environment MUST set a strong SECRET_KEY via environment variable (minimum 32 characters).")
+            if self.ADMIN_PASSWORD == "admin123" or self.CS_PASSWORD == "cs123":
+                raise RuntimeError("FATAL SECURITY ERROR: Production environment MUST set ADMIN_PASSWORD and CS_PASSWORD via environment variables.")
+
+        cors_env = os.getenv("BACKEND_CORS_ORIGINS")
+        if cors_env:
+            self.BACKEND_CORS_ORIGINS: list = [origin.strip() for origin in cors_env.split(",") if origin.strip()]
+        elif self.ENVIRONMENT == "production":
+            self.BACKEND_CORS_ORIGINS: list = ["https://ciheul.com", "https://helpdesk.ciheul.com"]
+        else:
+            self.BACKEND_CORS_ORIGINS: list = ["*"]
 
 settings = Settings()

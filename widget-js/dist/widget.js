@@ -144,10 +144,18 @@
 
                     updateStatusUI(ticket.status);
                     connectWebSocket(activeTicketId);
+                } else {
+                    activeTicketId = null;
+                    localStorage.removeItem("ciheul_ticket_id");
                 }
+            } else {
+                activeTicketId = null;
+                localStorage.removeItem("ciheul_ticket_id");
             }
         } catch (err) {
             console.warn("Ciheul Widget: Connection error:", err);
+            activeTicketId = null;
+            localStorage.removeItem("ciheul_ticket_id");
         }
     }
 

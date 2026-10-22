@@ -4,26 +4,26 @@ from typing import Optional, List
 from .message import MessageResponse
 
 class TicketCreate(BaseModel):
-    session_token: str
-    customer_name: Optional[str] = "Pengunjung Tamu"
-    customer_email: Optional[str] = None
-    subject: Optional[str] = "Konsultasi Kendala"
-    category: Optional[str] = "GENERAL"
-    initial_message: str
+    session_token: str = Field(..., min_length=5, max_length=128)
+    customer_name: Optional[str] = Field("Pengunjung Tamu", max_length=100)
+    customer_email: Optional[str] = Field(None, max_length=150)
+    subject: Optional[str] = Field("Konsultasi Kendala", max_length=200)
+    category: Optional[str] = Field("GENERAL", max_length=50)
+    initial_message: str = Field(..., min_length=1, max_length=3000)
 
 class TicketUpdate(BaseModel):
-    status: Optional[str] = None
-    priority: Optional[str] = None
-    category: Optional[str] = None
-    assigned_agent_id: Optional[str] = None
+    status: Optional[str] = Field(None, max_length=50)
+    priority: Optional[str] = Field(None, max_length=50)
+    category: Optional[str] = Field(None, max_length=50)
+    assigned_agent_id: Optional[str] = Field(None, max_length=100)
 
 class TicketRatingRequest(BaseModel):
-    session_token: Optional[str] = None
+    session_token: Optional[str] = Field(None, max_length=128)
     rating: int = Field(..., ge=1, le=5, description="Nilai kepuasan layanan skala 1 sampai 5")
-    feedback: Optional[str] = None
+    feedback: Optional[str] = Field(None, max_length=1000)
 
 class TicketEscalateRequest(BaseModel):
-    session_token: Optional[str] = None
+    session_token: Optional[str] = Field(None, max_length=128)
 
 class TicketResponse(BaseModel):
     id: str

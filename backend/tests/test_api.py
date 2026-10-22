@@ -1,18 +1,34 @@
 import os
 import sys
-import pytest
-from fastapi.testclient import TestClient
 
 # Ensure backend directory is in python path
 backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-from main import app
-from app.core.database import SessionLocal
+# Isolate test database: configure dedicated test SQLite DB so helpdesk.db is never touched
+TEST_DB_PATH = os.path.join(backend_dir, "test_isolated.db")
+if os.path.exists(TEST_DB_PATH):
+    try:
+        os.remove(TEST_DB_PATH)
+    except Exception:
+        pass
+
+os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
+os.environ["ENVIRONMENT"] = "testing"
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app.core.database import SessionLocal, engine, Base
+from app.core.init_db import init_database
 from app.models.ticket import Ticket
 from app.services.ai_bot_service import AIBotService
 
+# Initialize clean isolated test database schema & seeds
+init_database()
+
+from main import app
 client = TestClient(app)
 
 def test_health_check():
@@ -267,4 +283,89 @@ def test_copilot_analysis_and_ask():
     })
     assert ask_res.status_code == 200
     assert "SLA" in ask_res.json()["answer"]
+
+def test_ai_bot_pii_sanitization():
+    raw_text = "Email saya adalah user.test@gmail.com dan nomor WhatsApp 081234567890. Kartu kredit 4111 2222 3333 4444."
+    sanitized = AIBotService.sanitize_pii(raw_text)
+    assert "user.test@gmail.com" not in sanitized
+    assert "[EMAIL_REDACTED]" in sanitized
+    assert "081234567890" not in sanitized
+    assert "[PHONE_REDACTED]" in sanitized
+    assert "4111 2222 3333 4444" not in sanitized
+    assert "[CARD_REDACTED]" in sanitized
+
+def test_copilot_fallback_no_hallucination():
+    db = SessionLocal()
+    try:
+        from app.models.ticket import Ticket
+        from app.models.message import Message
+        ticket = Ticket(
+            subject="Kendala password akun",
+            category="ACCOUNT",
+            priority="HIGH",
+            status="WAITING_AGENT"
+        )
+        msg = Message(
+            ticket_id=ticket.id,
+            sender_type="CUSTOMER",
+            sender_name="Budi",
+            content="Saya lupa password akun saya dan tidak bisa login"
+        )
+        analysis = AIBotService.generate_copilot_analysis(db, ticket, [msg])
+        draft = analysis["draft_reply"]
+        # Must not claim email was already sent
+        assert "baru saja kami kirimkan" not in draft
+        assert "apakah Anda masih memiliki akses" in draft
+    finally:
+        db.close()
+
+def test_ticket_input_validation_boundaries():
+    # Message exceeding 3000 chars should be rejected with 422
+    huge_message = "A" * 3500
+    res = client.post("/api/v1/tickets", json={
+        "session_token": "token_boundary_test",
+        "customer_name": "Boundary Tester",
+        "initial_message": huge_message
+    })
+    assert res.status_code == 422
+
+def test_customer_facing_agent_id_masking():
+    # 1. Create ticket
+    create_res = client.post("/api/v1/tickets", json={
+        "session_token": "session_masking_99",
+        "customer_name": "Masking Tester",
+        "initial_message": "Mohon bantuan akun"
+    })
+    ticket_id = create_res.json()["id"]
+
+    # 2. Login CS & claim ticket
+    login_res = client.post("/api/v1/auth/login", json={"email": "cs@ciheul.com", "password": "cs123"})
+    token = login_res.json()["access_token"]
+    claim_res = client.post(f"/api/v1/tickets/{ticket_id}/claim", headers={"Authorization": f"Bearer {token}"})
+    assert claim_res.status_code == 200
+    assert claim_res.json()["assigned_agent_id"] is not None
+
+    # 3. Check customer-facing active ticket endpoint -> assigned_agent_id must be None
+    active_res = client.get("/api/v1/tickets/active/session_masking_99")
+    assert active_res.status_code == 200
+    active_data = active_res.json()
+    assert active_data["assigned_agent_id"] is None
+    assert active_data["agent_name"] is not None
+
+def test_production_safeguards_raise_error():
+    from app.core.config import Settings
+    import os
+    # Temporarily simulate production environment with default secret key
+    old_env = os.environ.get("ENVIRONMENT")
+    try:
+        os.environ["ENVIRONMENT"] = "production"
+        with pytest.raises(RuntimeError) as exc_info:
+            Settings()
+        assert "FATAL SECURITY ERROR" in str(exc_info.value)
+    finally:
+        if old_env:
+            os.environ["ENVIRONMENT"] = old_env
+        else:
+            del os.environ["ENVIRONMENT"]
+
 

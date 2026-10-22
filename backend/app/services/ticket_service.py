@@ -28,10 +28,21 @@ class TicketService:
 
     @classmethod
     def get_active_ticket_for_customer(cls, db: Session, customer_id: str) -> Optional[Ticket]:
-        return db.query(Ticket).filter(
+        # 1. First check for active ongoing tickets
+        active = db.query(Ticket).filter(
             Ticket.customer_id == customer_id,
             Ticket.status.in_(["BOT_ACTIVE", "WAITING_AGENT", "AGENT_ACTIVE"])
         ).order_by(desc(Ticket.created_at)).first()
+        if active:
+            return active
+
+        # 2. Check for recent resolved tickets that have not been rated yet
+        unrated_resolved = db.query(Ticket).filter(
+            Ticket.customer_id == customer_id,
+            Ticket.status == "RESOLVED",
+            Ticket.rating.is_(None)
+        ).order_by(desc(Ticket.updated_at)).first()
+        return unrated_resolved
 
     @classmethod
     def create_ticket(cls, db: Session, data: TicketCreate) -> Tuple[Ticket, Message]:
@@ -68,56 +79,70 @@ class TicketService:
     @classmethod
     def escalate_ticket(cls, db: Session, ticket_id: str) -> Optional[Ticket]:
         ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
-        if ticket:
-            ticket.status = "WAITING_AGENT"
-            ticket.updated_at = datetime.utcnow()
-            
-            # Add system message
-            sys_msg = Message(
-                ticket_id=ticket.id,
-                sender_type="SYSTEM",
-                sender_name="Sistem Helpdesk",
-                content="Tiket telah dialihkan ke antrean Customer Support."
-            )
-            db.add(sys_msg)
-            db.commit()
-            db.refresh(ticket)
+        if not ticket or ticket.status in ["RESOLVED", "CLOSED"]:
+            return None
+
+        ticket.status = "WAITING_AGENT"
+        ticket.updated_at = datetime.utcnow()
+        
+        # Add system message
+        sys_msg = Message(
+            ticket_id=ticket.id,
+            sender_type="SYSTEM",
+            sender_name="Sistem Helpdesk",
+            content="Tiket telah dialihkan ke antrean Customer Support."
+        )
+        db.add(sys_msg)
+        db.commit()
+        db.refresh(ticket)
         return ticket
 
     @classmethod
-    def claim_ticket(cls, db: Session, ticket_id: str, agent_id: str) -> Optional[Ticket]:
+    def claim_ticket(cls, db: Session, ticket_id: str, agent_id: str, allow_takeover: bool = False) -> Optional[Ticket]:
         ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
         agent = db.query(User).filter(User.id == agent_id).first()
-        if ticket and agent:
-            ticket.assigned_agent_id = agent.id
-            ticket.status = "AGENT_ACTIVE"
-            ticket.updated_at = datetime.utcnow()
+        if not ticket or not agent:
+            return None
 
-            sys_msg = Message(
-                ticket_id=ticket.id,
-                sender_type="SYSTEM",
-                sender_name="Sistem Helpdesk",
-                content=f"Agen {agent.full_name} ditugaskan ke percakapan ini."
-            )
-            db.add(sys_msg)
-            db.commit()
-            db.refresh(ticket)
+        # Cannot claim already resolved or closed ticket
+        if ticket.status in ["RESOLVED", "CLOSED"]:
+            return None
+
+        # Prevent accidental claim takeover if already claimed by another agent
+        if ticket.assigned_agent_id and ticket.assigned_agent_id != agent.id and not allow_takeover:
+            return None
+
+        ticket.assigned_agent_id = agent.id
+        ticket.status = "AGENT_ACTIVE"
+        ticket.updated_at = datetime.utcnow()
+
+        sys_msg = Message(
+            ticket_id=ticket.id,
+            sender_type="SYSTEM",
+            sender_name="Sistem Helpdesk",
+            content=f"Agen {agent.full_name} ditugaskan ke percakapan ini."
+        )
+        db.add(sys_msg)
+        db.commit()
+        db.refresh(ticket)
         return ticket
 
     @classmethod
     def resolve_ticket(cls, db: Session, ticket_id: str) -> Optional[Ticket]:
         ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
-        if ticket:
-            ticket.status = "RESOLVED"
-            ticket.updated_at = datetime.utcnow()
+        if not ticket or ticket.status in ["RESOLVED", "CLOSED"]:
+            return None
 
-            sys_msg = Message(
-                ticket_id=ticket.id,
-                sender_type="SYSTEM",
-                sender_name="Sistem Helpdesk",
-                content="Kendala telah ditandai selesai oleh Customer Support."
-            )
-            db.add(sys_msg)
-            db.commit()
-            db.refresh(ticket)
+        ticket.status = "RESOLVED"
+        ticket.updated_at = datetime.utcnow()
+
+        sys_msg = Message(
+            ticket_id=ticket.id,
+            sender_type="SYSTEM",
+            sender_name="Sistem Helpdesk",
+            content="Kendala telah ditandai selesai oleh Customer Support."
+        )
+        db.add(sys_msg)
+        db.commit()
+        db.refresh(ticket)
         return ticket

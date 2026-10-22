@@ -92,6 +92,17 @@ class AIBotService:
         }
 
     @classmethod
+    def sanitize_pii(cls, text: str) -> str:
+        """Sanitize PII (emails, phone numbers, card numbers) from text before passing to external LLMs."""
+        # 1. Mask credit/payment cards first (e.g. 16 digits grouped by 4 or contiguous)
+        text = re.sub(r'\b(?:\d{4}[ -]?){3}\d{4}\b', '[CARD_REDACTED]', text)
+        # 2. Mask emails
+        text = re.sub(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', '[EMAIL_REDACTED]', text)
+        # 3. Mask phone numbers
+        text = re.sub(r'(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,5}[-.\s]?\d{3,5}', '[PHONE_REDACTED]', text)
+        return text
+
+    @classmethod
     def generate_copilot_analysis(cls, db: Session, ticket: Ticket, messages: List[Message]) -> Dict[str, Any]:
         """
         Generate proactive Copilot 2 analysis:
@@ -110,12 +121,13 @@ class AIBotService:
         cust_name = ticket.customer.name if ticket.customer else "Pelanggan"
         first_cust_msg = next((m.content for m in messages if m.sender_type == "CUSTOMER"), ticket.subject)
 
-        # 1. If Gemini API key is available, call Gemini API
+        # 1. If Gemini API key is available, call Gemini API with sanitized PII
         if cls.GEMINI_API_KEY:
             try:
+                sanitized_conversation = cls.sanitize_pii(conversation_text)
                 prompt = (
                     f"Anda adalah Copilot AI untuk agen Customer Support CIHEUL Technologies.\n"
-                    f"Percakapan pelanggan:\n{conversation_text}\n\n"
+                    f"Percakapan pelanggan:\n{sanitized_conversation}\n\n"
                     f"Berikan output dalam format JSON valid tanpa markdown formatting dengan kunci:\n"
                     f"1. 'summary': Ringkasan 2 kalimat tentang masalah apa yang dialami pelanggan.\n"
                     f"2. 'draft_reply': Draf balasan profesional dan solutif untuk agen CS kirimkan ke {cust_name}. DILARANG menggunakan emoji.\n"
@@ -136,15 +148,15 @@ class AIBotService:
         lower_first = first_cust_msg.lower()
         if "password" in lower_first or "kata sandi" in lower_first:
             summary = f"Pelanggan {cust_name} mengalami kendala akses atau reset kata sandi pada akunnya. Sistem otomatis telah mengarahkan panduan awal namun sesi dialihkan ke CS."
-            draft = f"Halo {cust_name}, saya telah memverifikasi status akun Anda. Tautan pembaruan kata sandi baru saja kami kirimkan ulang ke alamat email terdaftar Anda. Silakan periksa folder kotak masuk atau spam."
-            follow_ups = ["Verifikasi status pengiriman email reset", "Tandai kategori Akun & Keamanan"]
+            draft = f"Halo {cust_name}, saya memahami kendala akses kata sandi pada akun Anda. Untuk membantu proses reset, mohon konfirmasikan apakah Anda masih memiliki akses ke alamat email terdaftar Anda?"
+            follow_ups = ["Verifikasi status kepemilikan email akun", "Tandai kategori Akun & Keamanan"]
         elif "bayar" in lower_first or "pembayaran" in lower_first or "qris" in lower_first or "tagihan" in lower_first:
             summary = f"Pelanggan {cust_name} menanyakan metode pembayaran atau konfirmasi status transaksi. Membutuhkan verifikasi gateway pembayaran."
             draft = f"Halo {cust_name}, terima kasih telah menunggu. Transaksi Anda saat ini sedang kami verifikasi pada gateway pembayaran kami. Bisa tolong sebutkan nomor referensi transaksi atau bukti transfer Anda?"
             follow_ups = ["Cek riwayat mutasi pembayaran di dashboard finance", "Kirim invoice resmi"]
         elif "aplikasi" in lower_first or "error" in lower_first or "bug" in lower_first or "loading" in lower_first:
             summary = f"Pelanggan {cust_name} melaporkan kendala teknis pada aplikasi (loading atau kegagalan sistem). Perlu investigasi log server."
-            draft = f"Halo {cust_name}, mohon maaf atas ketidaknyamanan ini. Tim teknis kami telah memeriksa laporan Anda dan saat ini sedang melakukan sinkronisasi cache server. Mohon coba tutup aplikasi sepenuhnya lalu buka kembali dalam 1 menit."
+            draft = f"Halo {cust_name}, mohon maaf atas ketidaknyamanan ini. Untuk membantu pemeriksaan kendala aplikasi, silakan coba tutup aplikasi sepenuhnya dan bersihkan cache perangkat Anda terlebih dahulu. Jika kendala masih berlanjut, mohon informasikan versi aplikasi serta detail pesan kesalahan yang muncul."
             follow_ups = ["Periksa error log pada server", "Laporkan ke tim Engineering jika berulang"]
         else:
             summary = f"Pelanggan {cust_name} membuka konsultasi terkait: '{first_cust_msg[:90]}'. Tiket telah masuk dalam antrean aktif penanganan CS."
