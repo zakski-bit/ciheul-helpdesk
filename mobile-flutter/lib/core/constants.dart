@@ -6,18 +6,26 @@ class AppConstants {
   // In release/production mode, enforce secure https and wss protocols
   static const bool isProduction = kReleaseMode;
   
-  // For Android emulator: 10.0.2.2:8000; For Windows desktop: localhost:8000; For Production: api.ciheul.com
-  static String devHost = const String.fromEnvironment('API_HOST', defaultValue: '10.0.2.2:8000');
-  static String prodHost = const String.fromEnvironment('PROD_API_HOST', defaultValue: 'api.ciheul.com');
+  // Default to localhost:8000 (suitable for adb reverse or local testing)
+  static String _activeHost = const String.fromEnvironment('API_HOST', defaultValue: 'localhost:8000');
 
-  static String get host => isProduction ? prodHost : devHost;
+  static String get host => _activeHost;
   static set host(String value) {
-    if (!isProduction) {
-      devHost = value;
+    if (value.trim().isNotEmpty) {
+      _activeHost = value.trim();
     }
   }
-  static String get protocol => isProduction ? 'https' : 'http';
-  static String get wsProtocol => isProduction ? 'wss' : 'ws';
+
+  static bool get _isLocalOrInsecure =>
+      _activeHost.contains('localhost') ||
+      _activeHost.contains('10.0.2.2') ||
+      _activeHost.contains('127.0.0.1') ||
+      _activeHost.contains(':8000') ||
+      _activeHost.startsWith('192.168.') ||
+      _activeHost.startsWith('10.');
+
+  static String get protocol => _isLocalOrInsecure ? 'http' : (isProduction ? 'https' : 'http');
+  static String get wsProtocol => _isLocalOrInsecure ? 'ws' : (isProduction ? 'wss' : 'ws');
 
   static String get apiBaseUrl => "$protocol://$host";
   static String get wsBaseUrl => "$wsProtocol://$host";
