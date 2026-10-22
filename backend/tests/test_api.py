@@ -31,6 +31,18 @@ init_database()
 from main import app
 client = TestClient(app)
 
+@pytest.fixture(scope="session", autouse=True)
+def teardown_test_environment():
+    """Ensure clean shutdown of TestClient and database connections so pytest exits cleanly."""
+    yield
+    client.close()
+    engine.dispose()
+    if os.path.exists(TEST_DB_PATH):
+        try:
+            os.remove(TEST_DB_PATH)
+        except Exception:
+            pass
+
 def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
@@ -285,14 +297,19 @@ def test_copilot_analysis_and_ask():
     assert "SLA" in ask_res.json()["answer"]
 
 def test_ai_bot_pii_sanitization():
-    raw_text = "Email saya adalah user.test@gmail.com dan nomor WhatsApp 081234567890. Kartu kredit 4111 2222 3333 4444."
-    sanitized = AIBotService.sanitize_pii(raw_text)
+    raw_text = "Nama saya Ahmad Syarif. NIK saya 3201012345670001 dan no rek 123456789012. Email user.test@gmail.com dan WhatsApp 081234567890. Kartu kredit 4111 2222 3333 4444."
+    sanitized = AIBotService.sanitize_pii(raw_text, customer_name="Ahmad Syarif")
     assert "user.test@gmail.com" not in sanitized
     assert "[EMAIL_REDACTED]" in sanitized
     assert "081234567890" not in sanitized
     assert "[PHONE_REDACTED]" in sanitized
     assert "4111 2222 3333 4444" not in sanitized
     assert "[CARD_REDACTED]" in sanitized
+    assert "3201012345670001" not in sanitized
+    assert "[NIK_REDACTED]" in sanitized
+    assert "123456789012" not in sanitized
+    assert "[ACCOUNT_REDACTED]" in sanitized
+    assert "Ahmad Syarif" not in sanitized
 
 def test_copilot_fallback_no_hallucination():
     db = SessionLocal()
@@ -358,8 +375,8 @@ def test_production_safeguards_raise_error():
     # Temporarily simulate production environment with default secret key
     old_env = os.environ.get("ENVIRONMENT")
     try:
-        # Test exact lowercase and uppercase 'PROD' alias
-        for env_val in ["production", "PROD", "Production"]:
+        # Test exact lowercase and uppercase 'PROD' and 'staging' aliases
+        for env_val in ["production", "PROD", "Production", "staging", "STAGING"]:
             os.environ["ENVIRONMENT"] = env_val
             with pytest.raises(RuntimeError) as exc_info:
                 Settings()
@@ -429,22 +446,16 @@ def test_websocket_rate_limiting():
 
     with client.websocket_connect(f"/ws/ticket/{ticket_id}?session_token=rate_test_sess_3") as ws:
         import json
-        # Send 7 rapid messages in an immediate burst
-        for i in range(7):
+        error_received = False
+        for i in range(8):
             ws.send_text(json.dumps({
                 "event": "send_message",
                 "content": f"Pesan cepat {i}"
             }))
-
-        error_received = False
-        for _ in range(20):
-            try:
-                resp = ws.receive_text()
-                data = json.loads(resp)
-                if data.get("event") == "error" and "Batas" in data.get("message", ""):
-                    error_received = True
-                    break
-            except Exception:
+            resp = ws.receive_text()
+            data = json.loads(resp)
+            if data.get("event") == "error" and ("Batas" in data.get("message", "") or "rate" in data.get("message", "").lower()):
+                error_received = True
                 break
         assert error_received is True
 

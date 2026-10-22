@@ -51,9 +51,17 @@ android {
     buildTypes {
         release {
             val releaseSigning = signingConfigs.getByName("release")
-            signingConfig = if (releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
+            val isReleaseKeystorePresent = releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()
+            val isStrictRelease = project.hasProperty("strictRelease") || System.getenv("STRICT_RELEASE") == "true" || System.getenv("CI") == "true"
+
+            if (isStrictRelease && !isReleaseKeystorePresent) {
+                throw GradleException("FATAL RELEASE BLOCKER: Release keystore is missing. Debug signing fallback is prohibited in CI/Production releases. Configure key.properties or provide STORE_FILE, KEY_ALIAS, and passwords.")
+            }
+
+            signingConfig = if (isReleaseKeystorePresent) {
                 releaseSigning
             } else {
+                logger.warn("WARNING: Release keystore not configured. Falling back to debug signing for local developer builds.")
                 signingConfigs.getByName("debug")
             }
         }

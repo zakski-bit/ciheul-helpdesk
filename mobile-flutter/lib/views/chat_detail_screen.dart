@@ -77,8 +77,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void _connectRoomWebSocket() {
     if (!mounted) return;
     try {
-      final wsUrl = Uri.parse("${AppConstants.wsBaseUrl}/ws/ticket/${widget.ticketId}?token=${Uri.encodeComponent(widget.token)}");
+      final wsUrl = Uri.parse("${AppConstants.wsBaseUrl}/ws/ticket/${widget.ticketId}");
       _roomChannel = WebSocketChannel.connect(wsUrl);
+
+      // In-band authentication handshake - zero token in URL query string
+      _roomChannel!.sink.add(jsonEncode({
+        "event": "auth",
+        "token": widget.token,
+      }));
 
       if (_messages.isNotEmpty) {
         _roomChannel!.sink.add(jsonEncode({

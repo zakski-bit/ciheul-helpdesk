@@ -179,9 +179,12 @@
         if (!authToken) return;
         if (globalSocket && globalSocket.readyState === WebSocket.OPEN) return;
 
-        globalSocket = new WebSocket(`${WS_BASE}/ws/agents?token=${encodeURIComponent(authToken)}`);
+        globalSocket = new WebSocket(`${WS_BASE}/ws/agents`);
 
         globalSocket.onopen = () => {
+            // In-band authentication handshake - zero token in URL query string
+            globalSocket.send(JSON.stringify({ event: "auth", token: authToken }));
+
             const hb = setInterval(() => {
                 if (globalSocket && globalSocket.readyState === WebSocket.OPEN) {
                     globalSocket.send(JSON.stringify({ event: "ping" }));
@@ -388,7 +391,12 @@
     function connectRoomWebSocket(ticketId) {
         if (!authToken) return;
         if (roomSocket) roomSocket.close();
-        roomSocket = new WebSocket(`${WS_BASE}/ws/ticket/${ticketId}?token=${encodeURIComponent(authToken)}`);
+        roomSocket = new WebSocket(`${WS_BASE}/ws/ticket/${ticketId}`);
+
+        roomSocket.onopen = () => {
+            // In-band authentication handshake - zero token in URL query string
+            roomSocket.send(JSON.stringify({ event: "auth", token: authToken }));
+        };
 
         roomSocket.onmessage = (event) => {
             try {

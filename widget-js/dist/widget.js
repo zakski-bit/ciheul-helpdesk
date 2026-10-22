@@ -183,12 +183,18 @@
             return;
         }
 
-        const wsUrl = `${WS_BASE}/ws/ticket/${ticketId}?session_token=${encodeURIComponent(sessionToken)}`;
+        const wsUrl = `${WS_BASE}/ws/ticket/${ticketId}`;
         socket = new WebSocket(wsUrl);
 
         socket.onopen = () => {
             reconnectAttempts = 0;
             
+            // In-band authentication handshake - zero token in URL query string
+            socket.send(JSON.stringify({
+                event: "auth",
+                session_token: sessionToken
+            }));
+
             if (heartbeatInterval) clearInterval(heartbeatInterval);
             heartbeatInterval = setInterval(() => {
                 if (socket && socket.readyState === WebSocket.OPEN) {

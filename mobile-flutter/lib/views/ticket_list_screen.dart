@@ -57,8 +57,14 @@ class _TicketListScreenState extends State<TicketListScreen> {
 
   void _connectAgentWebSocket() {
     try {
-      final wsUrl = Uri.parse("${AppConstants.wsBaseUrl}/ws/agents?token=${Uri.encodeComponent(widget.token)}");
+      final wsUrl = Uri.parse("${AppConstants.wsBaseUrl}/ws/agents");
       _agentChannel = WebSocketChannel.connect(wsUrl);
+
+      // In-band authentication handshake - zero token in URL query string
+      _agentChannel!.sink.add(jsonEncode({
+        "event": "auth",
+        "token": widget.token,
+      }));
 
       _agentChannel!.stream.listen(
         (message) {

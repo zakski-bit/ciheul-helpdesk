@@ -78,21 +78,37 @@ async def websocket_ticket_room(
         # Connection verified - register to room
         await ws_manager.connect_to_ticket(websocket, ticket_id)
 
-        # Sliding window rate limiting: max 5 messages per 3 seconds per connection
-        message_timestamps: List[float] = []
+        # Sliding window rate limiting:
+        # 1. Connection-wide event limiter: max 20 events per 3s (prevents typing/sync_missed/ping spam)
+        # 2. Chat message limiter: max 5 messages per 3s
+        connection_event_timestamps: List[float] = []
+        chat_message_timestamps: List[float] = []
+        MAX_EVENTS_PER_WINDOW = 20
         MAX_MESSAGES_PER_WINDOW = 5
         WINDOW_SECONDS = 3.0
-        MAX_FRAME_SIZE = 65536  # 64 KB
+        MAX_FRAME_BYTES = 65536  # 64 KB strictly measured in bytes
         MAX_CONTENT_LENGTH = 3000
 
         while True:
             raw_data = await websocket.receive_text()
-            if len(raw_data) > MAX_FRAME_SIZE:
+            # Enforce 64 KB limit based on exact UTF-8 byte representation
+            if len(raw_data.encode('utf-8')) > MAX_FRAME_BYTES:
                 await websocket.send_text(json.dumps({
                     "event": "error",
                     "message": "Payload melebihi batas maksimum 64 KB"
                 }))
                 continue
+
+            now = time.time()
+            # Connection-wide event rate limiting
+            connection_event_timestamps = [t for t in connection_event_timestamps if now - t < WINDOW_SECONDS]
+            if len(connection_event_timestamps) >= MAX_EVENTS_PER_WINDOW:
+                await websocket.send_text(json.dumps({
+                    "event": "error",
+                    "message": "Batas frekuensi event koneksi terlampaui. Mohon tunggu sejenak."
+                }))
+                continue
+            connection_event_timestamps.append(now)
 
             try:
                 msg_data = json.loads(raw_data)
@@ -147,14 +163,14 @@ async def websocket_ticket_room(
             elif event_type == "send_message":
                 # Rate Limiting check
                 now = time.time()
-                message_timestamps = [t for t in message_timestamps if now - t < WINDOW_SECONDS]
-                if len(message_timestamps) >= MAX_MESSAGES_PER_WINDOW:
+                chat_message_timestamps = [t for t in chat_message_timestamps if now - t < WINDOW_SECONDS]
+                if len(chat_message_timestamps) >= MAX_MESSAGES_PER_WINDOW:
                     await websocket.send_text(json.dumps({
                         "event": "error",
                         "message": "Batas pengiriman pesan terlampaui. Mohon tunggu sejenak."
                     }))
                     continue
-                message_timestamps.append(now)
+                chat_message_timestamps.append(now)
 
                 content = str(msg_data.get("content", "")).strip()
                 if not content:
@@ -287,9 +303,31 @@ async def websocket_agents_channel(
         db.close()
 
     await ws_manager.connect_agent_channel(websocket)
+    agent_event_timestamps: List[float] = []
+    MAX_AGENT_EVENTS = 20
+    WINDOW_SECONDS = 3.0
+    MAX_FRAME_BYTES = 65536
+
     try:
         while True:
             raw = await websocket.receive_text()
+            if len(raw.encode('utf-8')) > MAX_FRAME_BYTES:
+                await websocket.send_text(json.dumps({
+                    "event": "error",
+                    "message": "Payload melebihi batas maksimum 64 KB"
+                }))
+                continue
+
+            now = time.time()
+            agent_event_timestamps = [t for t in agent_event_timestamps if now - t < WINDOW_SECONDS]
+            if len(agent_event_timestamps) >= MAX_AGENT_EVENTS:
+                await websocket.send_text(json.dumps({
+                    "event": "error",
+                    "message": "Batas frekuensi event kanal agen terlampaui."
+                }))
+                continue
+            agent_event_timestamps.append(now)
+
             try:
                 data = json.loads(raw)
                 if data.get("event") == "ping":

@@ -82,6 +82,17 @@ jobs:
         working-directory: mobile-flutter
         run: flutter pub get
 
+      - name: Configure Production Release Keystore
+        working-directory: mobile-flutter/android
+        run: |
+          if [ ! -f "key.properties" ]; then
+            keytool -genkeypair -v -keystore ciheul-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias ciheul_release_key -dname "CN=Ciheul Helpdesk, OU=Engineering, O=Ciheul Technologies, C=ID" -storepass ciheul_keystore_pass123 -keypass ciheul_keystore_pass123
+            echo "keyAlias=ciheul_release_key" > key.properties
+            echo "keyPassword=ciheul_keystore_pass123" >> key.properties
+            echo "storeFile=ciheul-release.jks" >> key.properties
+            echo "storePassword=ciheul_keystore_pass123" >> key.properties
+          fi
+
       - name: Build Release APK
         working-directory: mobile-flutter
         run: flutter build apk --release

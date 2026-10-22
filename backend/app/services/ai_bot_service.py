@@ -92,14 +92,40 @@ class AIBotService:
         }
 
     @classmethod
-    def sanitize_pii(cls, text: str) -> str:
-        """Sanitize PII (emails, phone numbers, card numbers) from text before passing to external LLMs."""
-        # 1. Mask credit/payment cards first (e.g. 16 digits grouped by 4 or contiguous)
-        text = re.sub(r'\b(?:\d{4}[ -]?){3}\d{4}\b', '[CARD_REDACTED]', text)
-        # 2. Mask emails
+    def sanitize_pii(cls, text: str, customer_name: Optional[str] = None, agent_name: Optional[str] = None) -> str:
+        """
+        Sanitize all PII (emails, phone numbers, card numbers, national IDs, bank accounts, 
+        and customer/agent personal names) from text before passing to external LLMs.
+        """
+        # 1. Mask credit/payment cards first (e.g. 16 digits grouped by 4 with spaces or hyphens)
+        text = re.sub(r'\b(?:\d{4}[ -]){3}\d{4}\b', '[CARD_REDACTED]', text)
+
+        # 2. Mask national ID (Indonesian NIK / KTP: 16 contiguous digits)
+        text = re.sub(r'\b\d{16}\b', '[NIK_REDACTED]', text)
+
+        # 3. Mask emails
         text = re.sub(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', '[EMAIL_REDACTED]', text)
-        # 3. Mask phone numbers
-        text = re.sub(r'(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,5}[-.\s]?\d{3,5}', '[PHONE_REDACTED]', text)
+
+        # 4. Mask phone numbers (starts with +62, 08, 021, or formatted international pattern)
+        text = re.sub(r'\b(?:\+?62|0)8[1-9]\d{7,10}\b', '[PHONE_REDACTED]', text)
+        text = re.sub(r'\+?\d{1,3}[-.\s]\(?\d{2,4}\)?[-.\s]\d{3,5}[-.\s]\d{3,5}\b', '[PHONE_REDACTED]', text)
+
+        # 5. Mask bank account numbers (10 to 14 contiguous digits)
+        text = re.sub(r'\b\d{10,14}\b', '[ACCOUNT_REDACTED]', text)
+
+        # 6. Mask customer name occurrences in message body
+        if customer_name and len(customer_name.strip()) > 1:
+            clean_cust = customer_name.strip()
+            text = re.sub(re.escape(clean_cust), '[NAMA_PELANGGAN]', text, flags=re.IGNORECASE)
+
+        # 7. Mask agent name occurrences in message body
+        if agent_name and len(agent_name.strip()) > 1:
+            clean_agent = agent_name.strip()
+            text = re.sub(re.escape(clean_agent), '[NAMA_AGEN]', text, flags=re.IGNORECASE)
+
+        # 8. Mask explicit name introductions (e.g. "nama saya Ahmad", "panggil saya Lisa")
+        text = re.sub(r'\b(nama saya|nama ku|panggil saya|atas nama)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)', r'\1 [NAMA_PELANGGAN]', text, flags=re.IGNORECASE)
+
         return text
 
     @classmethod
@@ -125,12 +151,13 @@ class AIBotService:
         anonymized_conversation = "\n".join(anonymized_lines)
 
         cust_name = ticket.customer.name if ticket.customer else "Pelanggan"
+        agent_name = ticket.assigned_agent.full_name if ticket.assigned_agent else None
         first_cust_msg = next((m.content for m in messages if m.sender_type == "CUSTOMER"), ticket.subject)
 
         # 1. If Gemini API key is available, call Gemini API with sanitized PII & anonymized identities
         if cls.GEMINI_API_KEY:
             try:
-                sanitized_conversation = cls.sanitize_pii(anonymized_conversation)
+                sanitized_conversation = cls.sanitize_pii(anonymized_conversation, customer_name=cust_name, agent_name=agent_name)
                 prompt = (
                     f"Anda adalah Copilot AI untuk agen Customer Support CIHEUL Technologies.\n"
                     f"Percakapan obrolan:\n{sanitized_conversation}\n\n"
