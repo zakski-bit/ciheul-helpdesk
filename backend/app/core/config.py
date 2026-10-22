@@ -5,9 +5,13 @@ logger = logging.getLogger("helpdesk.config")
 
 def _load_env_file():
     """Automatically load .env into os.environ if present, avoiding manual export requirements."""
+    current_file_dir = os.path.dirname(os.path.abspath(__file__))
+    backend_dir = os.path.dirname(os.path.dirname(current_file_dir))
+    project_root = os.path.dirname(backend_dir)
     possible_paths = [
         os.path.join(os.getcwd(), ".env"),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
+        os.path.join(backend_dir, ".env"),
+        os.path.join(project_root, ".env")
     ]
     for env_path in possible_paths:
         if os.path.isfile(env_path):
