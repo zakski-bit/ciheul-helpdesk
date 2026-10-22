@@ -3,6 +3,7 @@ name: Helpdesk Omnichannel CI/CD
 on:
   push:
     branches: [ main, master ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
@@ -57,12 +58,64 @@ jobs:
         working-directory: mobile-flutter
         run: flutter test
 
-  build-apk:
-    name: Build Android Release APK
+  # CI Build Job: runs on pull requests and pushes without production secrets.
+  # Uses isolated ephemeral keystore for build integrity verification.
+  build-ci-apk:
+    name: Build CI Verification APK
     needs: [backend-tests, flutter-tests]
     runs-on: ubuntu-latest
-    env:
-      RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+
+      - name: Install Dependencies
+        working-directory: mobile-flutter
+        run: flutter pub get
+
+      - name: Configure CI Keystore
+        working-directory: mobile-flutter/android
+        run: |
+          if [ ! -f "key.properties" ]; then
+            keytool -genkeypair -v -keystore ciheul-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias ciheul_ci_key -dname "CN=Ciheul Helpdesk CI, OU=Engineering, O=Ciheul Technologies, C=ID" -storepass ciheul_keystore_pass123 -keypass ciheul_keystore_pass123
+            echo "keyAlias=ciheul_ci_key" > key.properties
+            echo "keyPassword=ciheul_keystore_pass123" >> key.properties
+            echo "storeFile=ciheul-release.jks" >> key.properties
+            echo "storePassword=ciheul_keystore_pass123" >> key.properties
+          fi
+
+      - name: Build CI APK
+        working-directory: mobile-flutter
+        run: flutter build apk --release
+
+      - name: Upload CI APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ciheul-helpdesk-ci-apk
+          path: mobile-flutter/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 90
+
+  # Production Release Job:
+  # Runs ONLY on explicit version tags (v*), never on pull requests or branch pushes.
+  # Production signing secrets are strictly isolated to this job's signing step.
+  release-official-apk:
+    name: Publish Official Production Release
+    needs: [backend-tests, flutter-tests]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout Repository
@@ -92,43 +145,25 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 --decode > ciheul-release.jks
-            echo "keyAlias=${KEY_ALIAS:-ciheul_release_key}" > key.properties
-            echo "keyPassword=${KEY_PASSWORD:-ciheul_keystore_pass123}" >> key.properties
-            echo "storeFile=ciheul-release.jks" >> key.properties
-            echo "storePassword=${STORE_PASSWORD:-ciheul_keystore_pass123}" >> key.properties
-          elif [ ! -f "key.properties" ]; then
-            keytool -genkeypair -v -keystore ciheul-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias ciheul_release_key -dname "CN=Ciheul Helpdesk, OU=Engineering, O=Ciheul Technologies, C=ID" -storepass ciheul_keystore_pass123 -keypass ciheul_keystore_pass123
-            echo "keyAlias=ciheul_release_key" > key.properties
-            echo "keyPassword=ciheul_keystore_pass123" >> key.properties
-            echo "storeFile=ciheul-release.jks" >> key.properties
-            echo "storePassword=ciheul_keystore_pass123" >> key.properties
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "FATAL: RELEASE_KEYSTORE_BASE64 secret is not configured in repository secrets."
+            exit 1
           fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > ciheul-release.jks
+          echo "keyAlias=${KEY_ALIAS:-ciheul_release_key}" > key.properties
+          echo "keyPassword=${KEY_PASSWORD}" >> key.properties
+          echo "storeFile=ciheul-release.jks" >> key.properties
+          echo "storePassword=${STORE_PASSWORD}" >> key.properties
 
-      - name: Build Release APK
+      - name: Build Official Release APK
         working-directory: mobile-flutter
         run: flutter build apk --release
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ciheul-helpdesk-release-apk
-          path: mobile-flutter/build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 90
-
-      - name: Skip Official Release Notice
-        if: env.RELEASE_KEYSTORE_BASE64 == ''
-        run: |
-          echo "INFO: RELEASE_KEYSTORE_BASE64 secret is not set. APK artifact compiled successfully for CI verification (available in Artifacts), but GitHub Release publishing was skipped to protect production release signature integrity."
-
-      - name: Create or Update GitHub Release with APK
-        if: (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && env.RELEASE_KEYSTORE_BASE64 != ''
+      - name: Publish Official GitHub Release
         uses: softprops/action-gh-release@v2
-        continue-on-error: true
         with:
           tag_name: ${{ github.ref_name }}
-          name: Ciheul Helpdesk Release ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           files: mobile-flutter/build/app/outputs/flutter-apk/app-release.apk
           draft: false
           prerelease: false

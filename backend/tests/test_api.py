@@ -504,19 +504,26 @@ def test_production_safeguards_reject_empty_and_weak_passwords():
     old_admin_pwd = os.environ.get("ADMIN_PASSWORD")
     old_cs_pwd = os.environ.get("CS_PASSWORD")
     try:
-        # 1. Empty ENVIRONMENT should raise error
+        # 1. Unset ENVIRONMENT should raise error (fail-closed)
+        if "ENVIRONMENT" in os.environ:
+            del os.environ["ENVIRONMENT"]
+        with pytest.raises(RuntimeError) as exc:
+            Settings()
+        assert "ENVIRONMENT variable is required and must be explicitly set" in str(exc.value)
+
+        # 2. Whitespace-only ENVIRONMENT should raise error
         os.environ["ENVIRONMENT"] = "   "
         with pytest.raises(RuntimeError) as exc:
             Settings()
-        assert "ENVIRONMENT variable is set but empty" in str(exc.value)
+        assert "ENVIRONMENT variable is required and must be explicitly set" in str(exc.value)
 
-        # 2. Unknown ENVIRONMENT should raise error
+        # 3. Unknown ENVIRONMENT should raise error
         os.environ["ENVIRONMENT"] = "invalid_unknown_env"
         with pytest.raises(RuntimeError) as exc:
             Settings()
         assert "Unknown ENVIRONMENT" in str(exc.value)
 
-        # 3. Production with strong secret but empty ADMIN_PASSWORD
+        # 4. Production with strong secret but empty ADMIN_PASSWORD
         os.environ["ENVIRONMENT"] = "production"
         os.environ["SECRET_KEY"] = "a" * 35
         os.environ["ADMIN_PASSWORD"] = ""
@@ -553,43 +560,51 @@ def test_login_schema_rejects_empty_password():
     assert res2.status_code == 422
 
 def test_rate_limiter_login():
-    test_ip = "192.168.77.88"
-    hit_429 = False
-    for i in range(25):
-        res = client.post(
-            "/api/v1/auth/login",
-            json={"email": "cs@ciheul.com", "password": "wrongpassword123"},
-            headers={"x-forwarded-for": test_ip}
-        )
-        if res.status_code == 429:
-            hit_429 = True
-            assert "Retry-After" in res.headers
-            assert "Terlalu banyak percobaan login" in res.json()["detail"]
-            break
-    assert hit_429 is True
+    from app.core.rate_limiter import login_rate_limiter
+    try:
+        test_ip = "192.168.77.88"
+        hit_429 = False
+        for i in range(25):
+            res = client.post(
+                "/api/v1/auth/login",
+                json={"email": "cs@ciheul.com", "password": "wrongpassword123"},
+                headers={"x-forwarded-for": test_ip}
+            )
+            if res.status_code == 429:
+                hit_429 = True
+                assert "Retry-After" in res.headers
+                assert "Terlalu banyak percobaan login" in res.json()["detail"]
+                break
+        assert hit_429 is True
+    finally:
+        login_rate_limiter.reset()
 
 def test_rate_limiter_ticket_creation():
-    test_ip = "192.168.77.99"
-    hit_429 = False
-    for i in range(35):
-        res = client.post(
-            "/api/v1/tickets",
-            json={
-                "customer_name": f"Spam Tester {i}",
-                "customer_email": f"spam{i}@test.com",
-                "session_token": f"rate_limit_token_{i}",
-                "subject": f"Spam Ticket {i}",
-                "category": "GENERAL",
-                "initial_message": f"Spam message {i}"
-            },
-            headers={"x-forwarded-for": test_ip}
-        )
-        if res.status_code == 429:
-            hit_429 = True
-            assert "Retry-After" in res.headers
-            assert "Terlalu banyak permintaan pembuatan tiket" in res.json()["detail"]
-            break
-    assert hit_429 is True
+    from app.core.rate_limiter import ticket_create_rate_limiter
+    try:
+        test_ip = "192.168.77.99"
+        hit_429 = False
+        for i in range(35):
+            res = client.post(
+                "/api/v1/tickets",
+                json={
+                    "customer_name": f"Spam Tester {i}",
+                    "customer_email": f"spam{i}@test.com",
+                    "session_token": f"rate_limit_token_{i}",
+                    "subject": f"Spam Ticket {i}",
+                    "category": "GENERAL",
+                    "initial_message": f"Spam message {i}"
+                },
+                headers={"x-forwarded-for": test_ip}
+            )
+            if res.status_code == 429:
+                hit_429 = True
+                assert "Retry-After" in res.headers
+                assert "Terlalu banyak permintaan pembuatan tiket" in res.json()["detail"]
+                break
+        assert hit_429 is True
+    finally:
+        ticket_create_rate_limiter.reset()
 
 def test_ticket_active_via_header():
     # 1. Create a ticket with a distinct session token
@@ -612,6 +627,59 @@ def test_ticket_active_via_header():
     assert data is not None
     assert data["id"] == created_id
     assert data["customer_name"] == "Header Test Customer"
+
+def test_rate_limiter_anti_spoofing_ignores_untrusted_forwarded_for():
+    from app.core.config import settings
+    from app.core.rate_limiter import InMemoryRateLimiter
+    from fastapi import Request, HTTPException
+    from unittest.mock import Mock
+    import asyncio
+
+    # Ensure proxy headers are untrusted (default)
+    original_trust = getattr(settings, "TRUST_PROXY_HEADERS", False)
+    settings.TRUST_PROXY_HEADERS = False
+
+    limiter = InMemoryRateLimiter(max_requests=3, window_seconds=60, name="test_anti_spoof")
+
+    # Simulate 4 requests from the same socket client host ("192.168.1.100"),
+    # but the client maliciously sends changing X-Forwarded-For headers
+    mock_request = Mock(spec=Request)
+    mock_request.client = Mock()
+    mock_request.client.host = "192.168.1.100"
+
+    hit_429 = False
+    for i in range(4):
+        mock_request.headers = {"x-forwarded-for": f"10.0.0.{i}"}
+        try:
+            asyncio.run(limiter(mock_request))
+        except HTTPException as e:
+            if e.status_code == 429:
+                hit_429 = True
+                break
+
+    settings.TRUST_PROXY_HEADERS = original_trust
+    assert hit_429 is True, "Rate limiter was bypassed by spoofed X-Forwarded-For header!"
+
+def test_rate_limiter_bounded_memory_cleanup():
+    import time
+    from app.core.rate_limiter import InMemoryRateLimiter
+    from fastapi import Request
+    from unittest.mock import Mock
+    import asyncio
+
+    limiter = InMemoryRateLimiter(max_requests=10, window_seconds=1, name="test_mem", max_tracked_ips=50)
+
+    # Populate 80 keys
+    mock_request = Mock(spec=Request)
+    mock_request.client = Mock()
+    mock_request.headers = {}
+    for i in range(80):
+        mock_request.client.host = f"10.20.{i // 256}.{i % 256}"
+        asyncio.run(limiter(mock_request))
+
+    # Force cleanup with timestamp in the future: records must not exceed max_tracked_ips
+    limiter._cleanup_expired(time.time() + 2)
+    assert len(limiter._records) <= 50
 
 
 

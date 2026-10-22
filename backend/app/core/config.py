@@ -41,16 +41,25 @@ class Settings:
 
     def __init__(self):
         env_input = os.getenv("ENVIRONMENT")
-        if env_input is not None and not env_input.strip():
-            raise RuntimeError("FATAL CONFIG ERROR: ENVIRONMENT variable is set but empty. Must be explicitly declared (e.g., 'development', 'staging', 'production').")
+        if not env_input or not env_input.strip():
+            raise RuntimeError(
+                "FATAL CONFIG ERROR: ENVIRONMENT variable is required and must be explicitly set "
+                "(e.g., 'development', 'staging', 'production', 'testing') via environment variable or .env file. "
+                "Fail-closed security prevents starting with an undeclared environment."
+            )
         
-        raw_env = (env_input or "development").strip().lower()
+        raw_env = env_input.strip().lower()
         if raw_env not in ALLOWED_ENVIRONMENTS:
             raise RuntimeError(f"FATAL CONFIG ERROR: Unknown ENVIRONMENT '{raw_env}'. Allowed values: {', '.join(sorted(ALLOWED_ENVIRONMENTS))}.")
 
         self.ENVIRONMENT: str = raw_env
         self.IS_PROTECTED_ENV: bool = raw_env in ["production", "prod", "staging"]
         self.IS_PRODUCTION: bool = raw_env in ["production", "prod"]
+
+        # Reverse Proxy trust settings for anti-spoofing rate limiting
+        self.TRUST_PROXY_HEADERS: bool = os.getenv("TRUST_PROXY_HEADERS", "false").strip().lower() in ("1", "true", "yes")
+        raw_trusted_proxies = os.getenv("TRUSTED_PROXIES", "127.0.0.1,::1")
+        self.TRUSTED_PROXIES: set = set(p.strip() for p in raw_trusted_proxies.split(",") if p.strip())
 
         self.SECRET_KEY: str = os.getenv("SECRET_KEY", self._DEFAULT_SECRET)
         self.ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "admin@ciheul.com")

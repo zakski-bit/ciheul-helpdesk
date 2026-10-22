@@ -23,3 +23,8 @@ Thumbs.db
 key.properties
 *.keystore
 *.jks
+
+# Environment & Secrets
+.env
+*.env
+!.env.example
