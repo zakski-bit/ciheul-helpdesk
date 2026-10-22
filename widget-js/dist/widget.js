@@ -6,9 +6,22 @@
     const WS_BASE = API_BASE.replace(/^http/, "ws");
     const LOGO_URL = `${API_BASE}/widget/dist/ciheul-logo.png`;
 
+    function generateCryptographicSessionToken() {
+        try {
+            if (typeof window !== "undefined" && window.crypto && window.crypto.getRandomValues) {
+                const bytes = new Uint8Array(24);
+                window.crypto.getRandomValues(bytes);
+                return "cust_" + Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+            }
+        } catch (e) {
+            // fallback if secure context unavailable
+        }
+        return "cust_" + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+    }
+
     let sessionToken = localStorage.getItem("ciheul_session_token");
     if (!sessionToken) {
-        sessionToken = "cust_" + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+        sessionToken = generateCryptographicSessionToken();
         localStorage.setItem("ciheul_session_token", sessionToken);
     }
 
@@ -148,7 +161,11 @@
     // 5. Check Active Ticket on Backend
     async function loadActiveTicket() {
         try {
-            const res = await fetch(`${API_BASE}/api/v1/tickets/active/${sessionToken}`);
+            const res = await fetch(`${API_BASE}/api/v1/tickets/active`, {
+                headers: {
+                    "X-Session-Token": sessionToken
+                }
+            });
             if (res.ok) {
                 const ticket = await res.json();
                 if (ticket && ticket.id) {

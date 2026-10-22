@@ -17,6 +17,12 @@ def init_database():
 
     from app.core.config import settings
 
+    # Validate non-empty passwords before seeding
+    if not settings.ADMIN_PASSWORD or not settings.ADMIN_PASSWORD.strip():
+        raise RuntimeError("Refusing to seed database: ADMIN_PASSWORD is empty or whitespace.")
+    if not settings.CS_PASSWORD or not settings.CS_PASSWORD.strip():
+        raise RuntimeError("Refusing to seed database: CS_PASSWORD is empty or whitespace.")
+
     # 1. Seed Users (using environment settings or configurable values)
     admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
     if not admin:

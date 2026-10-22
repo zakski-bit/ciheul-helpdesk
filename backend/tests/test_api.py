@@ -496,5 +496,123 @@ def test_honest_payment_fallback_draft():
     finally:
         db.close()
 
+def test_production_safeguards_reject_empty_and_weak_passwords():
+    from app.core.config import Settings
+    import os
+    old_env = os.environ.get("ENVIRONMENT")
+    old_secret = os.environ.get("SECRET_KEY")
+    old_admin_pwd = os.environ.get("ADMIN_PASSWORD")
+    old_cs_pwd = os.environ.get("CS_PASSWORD")
+    try:
+        # 1. Empty ENVIRONMENT should raise error
+        os.environ["ENVIRONMENT"] = "   "
+        with pytest.raises(RuntimeError) as exc:
+            Settings()
+        assert "ENVIRONMENT variable is set but empty" in str(exc.value)
+
+        # 2. Unknown ENVIRONMENT should raise error
+        os.environ["ENVIRONMENT"] = "invalid_unknown_env"
+        with pytest.raises(RuntimeError) as exc:
+            Settings()
+        assert "Unknown ENVIRONMENT" in str(exc.value)
+
+        # 3. Production with strong secret but empty ADMIN_PASSWORD
+        os.environ["ENVIRONMENT"] = "production"
+        os.environ["SECRET_KEY"] = "a" * 35
+        os.environ["ADMIN_PASSWORD"] = ""
+        os.environ["CS_PASSWORD"] = "strong_cs_password_2026"
+        with pytest.raises(RuntimeError) as exc:
+            Settings()
+        assert "ADMIN_PASSWORD cannot be empty" in str(exc.value)
+
+        # 4. Production with strong secret but weak ADMIN_PASSWORD
+        os.environ["ADMIN_PASSWORD"] = "password123"
+        with pytest.raises(RuntimeError) as exc:
+            Settings()
+        assert "rejected weak or default ADMIN_PASSWORD" in str(exc.value)
+
+        # 5. Production with strong secret and short CS_PASSWORD (< 8 chars)
+        os.environ["ADMIN_PASSWORD"] = "super_strong_admin_pass"
+        os.environ["CS_PASSWORD"] = "short"
+        with pytest.raises(RuntimeError) as exc:
+            Settings()
+        assert "minimum 8 characters" in str(exc.value)
+    finally:
+        for k, v in [("ENVIRONMENT", old_env), ("SECRET_KEY", old_secret), ("ADMIN_PASSWORD", old_admin_pwd), ("CS_PASSWORD", old_cs_pwd)]:
+            if v is not None:
+                os.environ[k] = v
+            elif k in os.environ:
+                del os.environ[k]
+
+def test_login_schema_rejects_empty_password():
+    # Password empty should fail with 422 Unprocessable Entity
+    res = client.post("/api/v1/auth/login", json={"email": "cs@ciheul.com", "password": ""})
+    assert res.status_code == 422
+    # Password too short (< 5 chars) should fail with 422
+    res2 = client.post("/api/v1/auth/login", json={"email": "cs@ciheul.com", "password": "123"})
+    assert res2.status_code == 422
+
+def test_rate_limiter_login():
+    test_ip = "192.168.77.88"
+    hit_429 = False
+    for i in range(25):
+        res = client.post(
+            "/api/v1/auth/login",
+            json={"email": "cs@ciheul.com", "password": "wrongpassword123"},
+            headers={"x-forwarded-for": test_ip}
+        )
+        if res.status_code == 429:
+            hit_429 = True
+            assert "Retry-After" in res.headers
+            assert "Terlalu banyak percobaan login" in res.json()["detail"]
+            break
+    assert hit_429 is True
+
+def test_rate_limiter_ticket_creation():
+    test_ip = "192.168.77.99"
+    hit_429 = False
+    for i in range(35):
+        res = client.post(
+            "/api/v1/tickets",
+            json={
+                "customer_name": f"Spam Tester {i}",
+                "customer_email": f"spam{i}@test.com",
+                "session_token": f"rate_limit_token_{i}",
+                "subject": f"Spam Ticket {i}",
+                "category": "GENERAL",
+                "initial_message": f"Spam message {i}"
+            },
+            headers={"x-forwarded-for": test_ip}
+        )
+        if res.status_code == 429:
+            hit_429 = True
+            assert "Retry-After" in res.headers
+            assert "Terlalu banyak permintaan pembuatan tiket" in res.json()["detail"]
+            break
+    assert hit_429 is True
+
+def test_ticket_active_via_header():
+    # 1. Create a ticket with a distinct session token
+    sess_token = "sess_secure_header_test_999"
+    create_res = client.post("/api/v1/tickets", json={
+        "customer_name": "Header Test Customer",
+        "customer_email": "header@test.com",
+        "session_token": sess_token,
+        "subject": "Header Ticket Test",
+        "category": "GENERAL",
+        "initial_message": "Testing active ticket via X-Session-Token header"
+    })
+    assert create_res.status_code == 200
+    created_id = create_res.json()["id"]
+
+    # 2. Query GET /api/v1/tickets/active WITHOUT token in URL path, but with X-Session-Token header
+    res = client.get("/api/v1/tickets/active", headers={"X-Session-Token": sess_token})
+    assert res.status_code == 200
+    data = res.json()
+    assert data is not None
+    assert data["id"] == created_id
+    assert data["customer_name"] == "Header Test Customer"
+
+
 
 

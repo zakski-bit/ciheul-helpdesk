@@ -5,6 +5,7 @@ from app.core.database import get_db
 from app.core.security import verify_password, create_access_token, decode_access_token
 from app.models.user import User
 from app.schemas.auth import LoginRequest, TokenResponse, UserResponse
+from app.core.rate_limiter import login_rate_limiter
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -36,7 +37,7 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
         )
     return current_user
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=TokenResponse, dependencies=[Depends(login_rate_limiter)])
 def login(creds: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == creds.email).first()
     if not user or not verify_password(creds.password, user.password_hash):

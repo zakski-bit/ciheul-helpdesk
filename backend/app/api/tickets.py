@@ -19,6 +19,7 @@ from app.services.ticket_service import TicketService
 from app.services.ai_bot_service import AIBotService
 from app.websockets.connection_manager import ws_manager
 from app.api.auth import get_current_user
+from app.core.rate_limiter import ticket_create_rate_limiter
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
 
@@ -56,9 +57,18 @@ def list_tickets(
         results.append(res)
     return results
 
+@router.get("/active", response_model=Optional[TicketDetailResponse])
 @router.get("/active/{session_token}", response_model=Optional[TicketDetailResponse])
-def get_active_ticket_for_widget(session_token: str, db: Session = Depends(get_db)):
-    customer = db.query(Customer).filter(Customer.session_token == session_token).first()
+def get_active_ticket_for_widget(
+    session_token: Optional[str] = None,
+    x_session_token: Optional[str] = Header(None, alias="X-Session-Token"),
+    db: Session = Depends(get_db)
+):
+    token = x_session_token or session_token
+    if not token:
+        return None
+
+    customer = db.query(Customer).filter(Customer.session_token == token).first()
     if not customer:
         return None
     
@@ -87,7 +97,7 @@ def get_active_ticket_for_widget(session_token: str, db: Session = Depends(get_d
         messages=msg_responses
     )
 
-@router.post("", response_model=TicketDetailResponse)
+@router.post("", response_model=TicketDetailResponse, dependencies=[Depends(ticket_create_rate_limiter)])
 async def create_ticket_from_widget(data: TicketCreate, db: Session = Depends(get_db)):
     ticket, first_msg = TicketService.create_ticket(db, data)
     
@@ -209,6 +219,7 @@ async def escalate_ticket(
     ticket_id: str, 
     data: Optional[TicketEscalateRequest] = None,
     session_token: Optional[str] = Query(None),
+    x_session_token: Optional[str] = Header(None, alias="X-Session-Token"),
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
@@ -219,7 +230,7 @@ async def escalate_ticket(
         raise HTTPException(status_code=400, detail="Tiket yang telah selesai tidak dapat dialihkan ke eskalasi")
     
     # Ownership verification: must be authenticated agent OR customer matching session_token
-    token_to_check = (data.session_token if data and data.session_token else None) or session_token
+    token_to_check = (data.session_token if data and data.session_token else None) or x_session_token or session_token
     is_authenticated_agent = False
     if authorization and authorization.startswith("Bearer "):
         try:
@@ -286,6 +297,7 @@ def rate_ticket(
     ticket_id: str, 
     data: TicketRatingRequest, 
     session_token: Optional[str] = Query(None),
+    x_session_token: Optional[str] = Header(None, alias="X-Session-Token"),
     db: Session = Depends(get_db)
 ):
     ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
@@ -293,7 +305,7 @@ def rate_ticket(
         raise HTTPException(status_code=404, detail="Tiket tidak ditemukan")
     
     # 1. Customer ownership verification
-    provided_session = data.session_token or session_token
+    provided_session = (data.session_token if data and data.session_token else None) or x_session_token or session_token
     if not provided_session or not ticket.customer or ticket.customer.session_token != provided_session:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
