@@ -115,13 +115,18 @@ jobs:
           path: mobile-flutter/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 90
 
+      - name: Skip Official Release Notice
+        if: secrets.RELEASE_KEYSTORE_BASE64 == ''
+        run: |
+          echo "INFO: RELEASE_KEYSTORE_BASE64 secret is not set. APK artifact compiled successfully for CI verification (available in Artifacts), but GitHub Release publishing was skipped to protect production release signature integrity."
+
       - name: Create or Update GitHub Release with APK
-        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+        if: (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && secrets.RELEASE_KEYSTORE_BASE64 != ''
         uses: softprops/action-gh-release@v2
         continue-on-error: true
         with:
-          tag_name: v1.0.0
-          name: Ciheul Helpdesk Release v1.0.0
+          tag_name: ${{ github.ref_name }}
+          name: Ciheul Helpdesk Release ${{ github.ref_name }}
           files: mobile-flutter/build/app/outputs/flutter-apk/app-release.apk
           draft: false
           prerelease: false

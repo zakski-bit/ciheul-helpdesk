@@ -103,25 +103,27 @@
     <!-- COLUMN 2: ACTIVE CONVERSATION -->
     <section id="conversation-column" class="hidden md:flex flex-1 bg-white border-r border-[#e5e7eb] flex-col min-w-0">
         <!-- Conversation Header -->
-        <div id="convo-header" class="h-14 px-4 md:px-6 border-b border-[#e5e7eb] flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <button id="btn-back-to-inbox" class="md:hidden p-1 text-[#6b7280] hover:text-[#111827] rounded-lg transition" title="Kembali ke daftar tiket">
+        <div id="convo-header" class="h-14 px-3 sm:px-4 md:px-6 border-b border-[#e5e7eb] flex items-center justify-between gap-1">
+            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <button id="btn-back-to-inbox" class="md:hidden p-1 text-[#6b7280] hover:text-[#111827] rounded-lg transition flex-shrink-0" title="Kembali ke daftar tiket">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
-                <h3 id="convo-customer-name" class="font-bold text-sm text-[#111827] truncate max-w-[150px] md:max-w-none">Pilih percakapan</h3>
-                <span id="convo-status-pill" class="hidden px-2.5 py-0.5 rounded-full text-[11px] font-semibold"></span>
+                <h3 id="convo-customer-name" class="font-bold text-xs sm:text-sm text-[#111827] truncate max-w-[90px] xs:max-w-[120px] sm:max-w-[180px] md:max-w-none">Pilih percakapan</h3>
+                <span id="convo-status-pill" class="hidden px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold flex-shrink-0"></span>
             </div>
-            <div id="convo-actions" class="hidden flex items-center gap-2">
-                <button id="btn-claim-ticket" class="hidden px-3.5 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-full text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                    <span>Claim Ticket</span>
+            <div id="convo-actions" class="hidden flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <button id="btn-claim-ticket" class="hidden px-2 sm:px-3.5 py-1 sm:py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-full text-[11px] sm:text-xs font-semibold transition flex items-center gap-1 shadow-sm flex-shrink-0">
+                    <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    <span>Claim</span>
                 </button>
-                <button id="btn-close-ticket" class="px-3.5 py-1.5 bg-[#111827] hover:bg-[#1f2937] text-white rounded-full text-xs font-semibold transition flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                <button id="btn-close-ticket" class="px-2 sm:px-3.5 py-1 sm:py-1.5 bg-[#111827] hover:bg-[#1f2937] text-white rounded-full text-[11px] sm:text-xs font-semibold transition flex items-center gap-1 flex-shrink-0">
+                    <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                     <span>Close</span>
                 </button>
-                <button id="btn-details-drawer" class="px-3 py-1.5 border border-[#e5e7eb] hover:bg-[#f9fafb] text-[#4b5563] rounded-lg text-xs font-semibold transition">
-                    Details
+                <button id="btn-details-drawer" class="px-2 sm:px-3 py-1 sm:py-1.5 border border-[#e5e7eb] hover:bg-[#f9fafb] text-[#4b5563] rounded-lg text-[11px] sm:text-xs font-semibold transition flex-shrink-0 flex items-center gap-1" title="Detail Tiket">
+                    <svg class="w-3.5 h-3.5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="hidden sm:inline">Details</span>
+                    <span class="sm:hidden">Info</span>
                 </button>
             </div>
         </div>
