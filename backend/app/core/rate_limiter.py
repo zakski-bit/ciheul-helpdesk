@@ -28,9 +28,14 @@ class InMemoryRateLimiter:
 
     def _get_client_ip(self, request: Request) -> str:
         direct_ip = request.client.host if request.client and request.client.host else "127.0.0.1"
-        # Anti-Spoofing: Only trust X-Forwarded-For if TRUST_PROXY_HEADERS is explicitly enabled
+        # Anti-Spoofing: Only trust proxy headers if TRUST_PROXY_HEADERS is explicitly enabled
         # AND the direct connecting peer is in the trusted proxy whitelist (e.g., local Nginx or Cloudflare edge).
         if getattr(settings, "TRUST_PROXY_HEADERS", False) and direct_ip in getattr(settings, "TRUSTED_PROXIES", {"127.0.0.1", "::1"}):
+            # Prefer X-Real-IP since reverse proxies (Nginx) overwrite this header directly
+            real_ip = request.headers.get("x-real-ip")
+            if real_ip and real_ip.strip():
+                return real_ip.strip()
+
             forwarded = request.headers.get("x-forwarded-for")
             if forwarded:
                 parts = [p.strip() for p in forwarded.split(",") if p.strip()]
