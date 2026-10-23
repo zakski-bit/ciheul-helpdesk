@@ -16,17 +16,19 @@ class CiheulHelpdeskApp extends StatelessWidget {
       title: 'CIHEUL Helpdesk Mobile',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: AppConstants.bgDark,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: AppConstants.bgLight,
         primaryColor: AppConstants.primaryBlue,
-        colorScheme: const ColorScheme.dark(
+        colorScheme: const ColorScheme.light(
           primary: AppConstants.primaryBlue,
-          secondary: AppConstants.accentIndigo,
-          surface: AppConstants.cardDark,
+          secondary: AppConstants.copilotAccent,
+          surface: AppConstants.cardLight,
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppConstants.cardDark,
+          backgroundColor: AppConstants.cardLight,
+          foregroundColor: AppConstants.textPrimary,
           elevation: 0,
+          scrolledUnderElevation: 0,
         ),
         useMaterial3: true,
       ),

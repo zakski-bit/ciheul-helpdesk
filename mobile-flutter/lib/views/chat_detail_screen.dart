@@ -58,7 +58,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       final res = await http.get(
         Uri.parse("${AppConstants.apiBaseUrl}/api/v1/tickets/${widget.ticketId}"),
         headers: {"Authorization": "Bearer ${widget.token}"},
-      );
+      ).timeout(const Duration(seconds: 6));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final List msgList = data['messages'] ?? [];
@@ -240,7 +240,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void _showAttachmentPicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppConstants.cardDark,
+      backgroundColor: AppConstants.cardLight,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -255,7 +255,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 const Text(
                   "Kirim Lampiran Dukungan",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppConstants.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -270,16 +270,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppConstants.primaryBlue.withValues(alpha: 0.15),
+                      color: AppConstants.primaryBlue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.image, color: AppConstants.primaryBlue),
                   ),
-                  title: const Text("Tangkapan Layar Panduan (PNG)", style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                  title: const Text("Tangkapan Layar Panduan (PNG)", style: TextStyle(color: AppConstants.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                   subtitle: const Text("Kirim sampel cuplikan langkah solusi", style: TextStyle(color: AppConstants.textMuted, fontSize: 11)),
                   onTap: () {
                     Navigator.pop(ctx);
-                    // Minimal 1x1 transparent PNG bytes
                     final pngBytes = base64Decode(
                       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
                     );
@@ -290,16 +289,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.redAccent.withValues(alpha: 0.15),
+                      color: Colors.redAccent.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.picture_as_pdf, color: Colors.redAccent),
                   ),
-                  title: const Text("Dokumen Diagnostik Sistem (PDF)", style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                  subtitle: const Text("Kirim log pengecekan teknis resmi", style: TextStyle(color: AppConstants.textMuted, fontSize: 11)),
+                  title: const Text("Dokumen Diagnostik Sistem (PDF)", style: TextStyle(color: AppConstants.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                  subtitle: const Text("Kirim laporan pengecekan teknis resmi", style: TextStyle(color: AppConstants.textMuted, fontSize: 11)),
                   onTap: () {
                     Navigator.pop(ctx);
-                    // Valid minimal PDF header bytes
                     final pdfBytes = utf8.encode("%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 300 144]>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n180\n%%EOF");
                     _uploadAttachment("laporan_diagnosa.pdf", pdfBytes);
                   },
@@ -317,7 +315,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppConstants.cardDark,
+      backgroundColor: AppConstants.cardLight,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -373,9 +371,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => Container(
                   height: 200,
-                  color: AppConstants.bgDark,
+                  color: Colors.black,
                   child: const Center(
-                    child: Text("Gagal memuat gambar", style: TextStyle(color: AppConstants.textMuted)),
+                    child: Text("Gagal memuat gambar", style: TextStyle(color: Colors.white70)),
                   ),
                 ),
               ),
@@ -392,16 +390,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final isClosed = _status == "RESOLVED" || _status == "CLOSED";
 
     return Scaffold(
-      backgroundColor: AppConstants.bgDark,
+      backgroundColor: AppConstants.bgLight,
       appBar: AppBar(
-        backgroundColor: AppConstants.cardDark,
+        backgroundColor: AppConstants.cardLight,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: AppConstants.textPrimary),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               widget.customerName,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppConstants.textPrimary),
             ),
             Text(
               widget.subject,
@@ -414,20 +414,44 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         actions: [
           IconButton(
             tooltip: "Buka Copilot AI",
-            icon: const Icon(Icons.auto_awesome, color: Color(0xFF818CF8)),
+            icon: const Icon(Icons.auto_awesome, color: Color(0xFF6366F1)),
             onPressed: _showCopilotSheet,
           ),
           if (_status == "WAITING_AGENT" || _status == "BOT_ACTIVE")
-            TextButton(
-              onPressed: _claimTicket,
-              child: const Text("Klaim", style: TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFEF3C7),
+                  foregroundColor: const Color(0xFF92400E),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
+                onPressed: _claimTicket,
+                child: const Text("Klaim Tiket", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
+              ),
             ),
           if (_status == "AGENT_ACTIVE")
-            TextButton(
-              onPressed: _resolveTicket,
-              child: const Text("Selesai", style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDCFCE7),
+                  foregroundColor: const Color(0xFF166534),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
+                onPressed: _resolveTicket,
+                child: const Text("Selesai", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
+              ),
             ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: AppConstants.borderLight, height: 1),
+        ),
       ),
       body: Column(
         children: [
@@ -447,7 +471,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           if (!isClosed)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              color: AppConstants.cardDark,
+              decoration: const BoxDecoration(
+                color: AppConstants.cardLight,
+                border: Border(top: BorderSide(color: AppConstants.borderLight)),
+              ),
               child: SafeArea(
                 child: Row(
                   children: [
@@ -459,20 +486,24 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     Expanded(
                       child: TextField(
                         controller: _msgCtrl,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: const TextStyle(color: AppConstants.textPrimary, fontSize: 13),
                         decoration: InputDecoration(
                           hintText: "Ketik balasan CS...",
                           hintStyle: const TextStyle(color: AppConstants.textMuted, fontSize: 12),
                           filled: true,
-                          fillColor: AppConstants.bgDark,
+                          fillColor: AppConstants.bgLight,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
-                            borderSide: const BorderSide(color: AppConstants.borderDark),
+                            borderSide: const BorderSide(color: AppConstants.borderLight),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
-                            borderSide: const BorderSide(color: AppConstants.borderDark),
+                            borderSide: const BorderSide(color: AppConstants.borderLight),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(color: AppConstants.primaryBlue, width: 1.5),
                           ),
                         ),
                       ),
@@ -492,11 +523,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           else
             Container(
               padding: const EdgeInsets.all(12),
-              color: Colors.green.withValues(alpha: 0.12),
+              color: const Color(0xFFDCFCE7),
               child: const Center(
                 child: Text(
                   "Kendala telah ditandai selesai (Resolved)",
-                  style: TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: Color(0xFF166534), fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -517,8 +548,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
-              color: AppConstants.borderDark.withValues(alpha: 0.6),
+              color: AppConstants.borderSubtle,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppConstants.borderLight),
             ),
             child: Text(
               msg.content,
@@ -531,9 +563,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
 
     final align = isAgent ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    Color bubbleColor = AppConstants.cardDark;
-    if (isAgent) bubbleColor = AppConstants.primaryBlue;
-    if (isBot) bubbleColor = const Color(0xFF1E1B4B);
+    Color bubbleColor = AppConstants.cardLight;
+    Color textColor = AppConstants.textPrimary;
+    Color borderColor = AppConstants.borderLight;
+
+    if (isAgent) {
+      bubbleColor = AppConstants.primaryBlue;
+      textColor = Colors.white;
+      borderColor = AppConstants.primaryBlue;
+    } else if (isBot) {
+      bubbleColor = AppConstants.botBg;
+      textColor = AppConstants.botText;
+      borderColor = AppConstants.botBorder;
+    }
 
     final time = DateFormat('HH:mm').format(msg.createdAt);
 
@@ -552,9 +594,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             decoration: BoxDecoration(
               color: bubbleColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isBot ? const Color(0xFF4338CA) : AppConstants.borderDark,
-              ),
+              border: Border.all(color: borderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,25 +609,25 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 Text(
                   msg.senderName,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.bold,
-                    color: isAgent ? Colors.white70 : (isBot ? const Color(0xFF818CF8) : AppConstants.primaryBlue),
+                    color: isAgent ? Colors.white70 : (isBot ? const Color(0xFF6366F1) : AppConstants.primaryBlue),
                   ),
                 ),
                 const SizedBox(height: 4),
                 if (match == null)
                   Text(
                     msg.content,
-                    style: const TextStyle(fontSize: 13, color: Colors.white, height: 1.35),
+                    style: TextStyle(fontSize: 13, color: textColor, height: 1.35),
                   )
                 else
-                  _buildAttachmentContent(msg.content, match),
+                  _buildAttachmentContent(msg.content, match, isAgent),
                 const SizedBox(height: 4),
                 Align(
                   alignment: Alignment.bottomRight,
                   child: Text(
                     time,
-                    style: const TextStyle(fontSize: 9, color: Colors.white54),
+                    style: TextStyle(fontSize: 9.5, color: isAgent ? Colors.white70 : AppConstants.textMuted),
                   ),
                 ),
               ],
@@ -591,7 +638,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
-  Widget _buildAttachmentContent(String content, RegExpMatch match) {
+  Widget _buildAttachmentContent(String content, RegExpMatch match, bool isAgent) {
     final filename = match.group(1) ?? 'Berkas Lampiran';
     final rawUrl = match.group(2) ?? '';
     final fileUrl = rawUrl.startsWith('http') ? rawUrl : '${AppConstants.apiBaseUrl}$rawUrl';
@@ -604,11 +651,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         filename.toLowerCase().endsWith('.jpeg') ||
         filename.toLowerCase().endsWith('.webp');
 
+    final textColor = isAgent ? Colors.white : AppConstants.textPrimary;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (prefixText.isNotEmpty) ...[
-          Text(prefixText, style: const TextStyle(fontSize: 13, color: Colors.white)),
+          Text(prefixText, style: TextStyle(fontSize: 13, color: textColor)),
           const SizedBox(height: 6),
         ],
         if (isImage)
@@ -625,7 +674,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       height: 120,
-                      color: AppConstants.bgDark,
+                      color: AppConstants.bgLight,
                       child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -644,7 +693,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.7),
+                        color: Colors.black.withValues(alpha: 0.65),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Row(
@@ -665,9 +714,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppConstants.bgDark,
+              color: isAgent ? Colors.white.withValues(alpha: 0.15) : AppConstants.bgLight,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppConstants.borderDark),
+              border: Border.all(color: isAgent ? Colors.white30 : AppConstants.borderLight),
             ),
             child: Row(
               children: [
@@ -686,14 +735,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     children: [
                       Text(
                         filename,
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      const Text(
+                      Text(
                         "Dokumen Lampiran Terverifikasi",
-                        style: TextStyle(color: AppConstants.textMuted, fontSize: 10),
+                        style: TextStyle(color: isAgent ? Colors.white70 : AppConstants.textMuted, fontSize: 10),
                       ),
                     ],
                   ),
@@ -703,7 +752,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
         if (suffixText.isNotEmpty) ...[
           const SizedBox(height: 6),
-          Text(suffixText, style: const TextStyle(fontSize: 13, color: Colors.white)),
+          Text(suffixText, style: TextStyle(fontSize: 13, color: textColor)),
         ],
       ],
     );
@@ -761,7 +810,7 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
           "Authorization": "Bearer ${widget.token}",
           "Content-Type": "application/json",
         },
-      );
+      ).timeout(const Duration(seconds: 8));
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -800,7 +849,7 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
           "Content-Type": "application/json",
         },
         body: jsonEncode({"question": q}),
-      );
+      ).timeout(const Duration(seconds: 8));
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -833,7 +882,7 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
       builder: (_, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: AppConstants.cardDark,
+            color: AppConstants.cardLight,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -845,22 +894,22 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppConstants.borderDark,
+                    color: AppConstants.borderLight,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-              // Header
+              // Header matching Web Copilot
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.auto_awesome, color: Color(0xFF818CF8), size: 18),
+                    child: const Icon(Icons.auto_awesome, color: Color(0xFF6366F1), size: 18),
                   ),
                   const SizedBox(width: 10),
                   const Expanded(
@@ -869,10 +918,10 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
                       children: [
                         Text(
                           "Copilot AI Assistant",
-                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: AppConstants.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          "Analisis konteks tiket & saran resolusi otomatis",
+                          "Analisis konteks tiket & saran resolusi cerdas",
                           style: TextStyle(color: AppConstants.textMuted, fontSize: 11),
                         ),
                       ],
@@ -884,7 +933,7 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
                   ),
                 ],
               ),
-              const Divider(color: AppConstants.borderDark, height: 24),
+              const Divider(color: AppConstants.borderLight, height: 24),
               // Body
               Expanded(
                 child: _isLoading
@@ -892,7 +941,7 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            CircularProgressIndicator(color: Color(0xFF818CF8)),
+                            CircularProgressIndicator(color: Color(0xFF6366F1)),
                             SizedBox(height: 12),
                             Text("Copilot sedang menganalisis obrolan...", style: TextStyle(color: AppConstants.textMuted, fontSize: 12)),
                           ],
@@ -907,7 +956,7 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
                                 const SizedBox(height: 10),
                                 OutlinedButton(
                                   onPressed: _fetchAnalysis,
-                                  child: const Text("Coba Lagi", style: TextStyle(color: Colors.white)),
+                                  child: const Text("Coba Lagi"),
                                 ),
                               ],
                             ),
@@ -931,9 +980,9 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppConstants.bgDark,
+            color: AppConstants.bgLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppConstants.borderDark),
+            border: Border.all(color: AppConstants.borderLight),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -948,35 +997,35 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
               const SizedBox(height: 8),
               Text(
                 analysis.summary,
-                style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+                style: const TextStyle(color: AppConstants.textPrimary, fontSize: 13, height: 1.4),
               ),
             ],
           ),
         ),
         const SizedBox(height: 14),
 
-        // Draft Reply Card
+        // Draft Reply Card matching Image 2
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1B4B).withValues(alpha: 0.5),
+            color: const Color(0xFFF0FDF4),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF4338CA)),
+            border: Border.all(color: const Color(0xFFBBF7D0)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Row(
                 children: [
-                  Icon(Icons.mark_chat_read_outlined, color: Color(0xFF818CF8), size: 16),
+                  Icon(Icons.mark_chat_read_outlined, color: Color(0xFF16A34A), size: 16),
                   SizedBox(width: 8),
-                  Text("Rekomendasi Respons Agen", style: TextStyle(color: Color(0xFF818CF8), fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text("Rekomendasi Respons Agen", style: TextStyle(color: Color(0xFF166534), fontSize: 12, fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 analysis.draftReply,
-                style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+                style: const TextStyle(color: Color(0xFF14532D), fontSize: 13, height: 1.4),
               ),
               const SizedBox(height: 12),
               Row(
@@ -984,12 +1033,13 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
                   Expanded(
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF818CF8),
-                        side: const BorderSide(color: Color(0xFF6366F1)),
+                        foregroundColor: const Color(0xFF166534),
+                        side: const BorderSide(color: Color(0xFF86EFAC)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       icon: const Icon(Icons.edit_note, size: 18),
-                      label: const Text("Gunakan Draf", style: TextStyle(fontSize: 12)),
+                      label: const Text("Gunakan Draf", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       onPressed: () => widget.onUseDraft(analysis.draftReply),
                     ),
                   ),
@@ -997,12 +1047,14 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
                   Expanded(
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4F46E5),
+                        backgroundColor: AppConstants.primaryBlue,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 10),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       icon: const Icon(Icons.send, size: 16),
-                      label: const Text("Kirim Langsung", style: TextStyle(fontSize: 12)),
+                      label: const Text("Kirim Langsung", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       onPressed: () => widget.onSendImmediately(analysis.draftReply),
                     ),
                   ),
@@ -1017,7 +1069,7 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
         if (analysis.followUps.isNotEmpty) ...[
           const Text(
             "Aksi / Saran Tindak Lanjut:",
-            style: TextStyle(color: AppConstants.textMuted, fontSize: 12, fontWeight: FontWeight.bold),
+            style: TextStyle(color: AppConstants.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1025,9 +1077,9 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
             runSpacing: 8,
             children: analysis.followUps.map((action) {
               return ActionChip(
-                backgroundColor: AppConstants.bgDark,
-                side: const BorderSide(color: AppConstants.borderDark),
-                label: Text(action, style: const TextStyle(color: Colors.white, fontSize: 11)),
+                backgroundColor: AppConstants.bgLight,
+                side: const BorderSide(color: AppConstants.borderLight),
+                label: Text(action, style: const TextStyle(color: AppConstants.textPrimary, fontSize: 11)),
                 avatar: const Icon(Icons.arrow_forward_ios, size: 10, color: AppConstants.primaryBlue),
                 onPressed: () => widget.onUseDraft(action),
               );
@@ -1040,18 +1092,18 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppConstants.bgDark,
+            color: AppConstants.bgLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppConstants.borderDark),
+            border: Border.all(color: AppConstants.borderLight),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Row(
                 children: [
-                  Icon(Icons.help_outline, color: Colors.amberAccent, size: 16),
+                  Icon(Icons.help_outline, color: Color(0xFFD97706), size: 16),
                   SizedBox(width: 8),
-                  Text("Tanya Copilot", style: TextStyle(color: Colors.amberAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text("Tanya Copilot", style: TextStyle(color: Color(0xFFB45309), fontSize: 12, fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -1060,14 +1112,20 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
                   Expanded(
                     child: TextField(
                       controller: _askCtrl,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style: const TextStyle(color: AppConstants.textPrimary, fontSize: 12),
                       decoration: InputDecoration(
                         hintText: "Contoh: Bagaimana aturan refund?",
                         hintStyle: const TextStyle(color: AppConstants.textMuted, fontSize: 11),
+                        filled: true,
+                        fillColor: Colors.white,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppConstants.borderDark),
+                          borderSide: const BorderSide(color: AppConstants.borderLight),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: AppConstants.borderLight),
                         ),
                       ),
                       onSubmitted: (_) => _handleAsk(),
@@ -1076,13 +1134,15 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
                   const SizedBox(width: 8),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber[700],
-                      foregroundColor: Colors.black,
+                      backgroundColor: const Color(0xFF0284C7),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     onPressed: _isAsking ? null : _handleAsk,
                     child: _isAsking
-                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Text("Tanya", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -1092,13 +1152,13 @@ class _CopilotSheetContentState extends State<_CopilotSheetContent> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.1),
+                    color: const Color(0xFFFEF3C7),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
                   ),
                   child: Text(
                     _askAnswer!,
-                    style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.35),
+                    style: const TextStyle(color: Color(0xFF92400E), fontSize: 12, height: 1.35),
                   ),
                 ),
               ],

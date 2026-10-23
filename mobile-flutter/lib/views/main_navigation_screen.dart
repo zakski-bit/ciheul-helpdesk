@@ -77,16 +77,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    backgroundColor: const Color(0xFF92400E),
+                    backgroundColor: const Color(0xFF0F172A),
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    content: Row(
-                      children: const [
+                    content: const Row(
+                      children: [
                         Icon(Icons.mark_email_unread_outlined, color: Colors.amberAccent, size: 18),
                         SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            "Tiket eskalasi baru dialihkan ke antrean CS",
+                            "Tiket baru menunggu penanganan CS",
                             style: TextStyle(color: Colors.white, fontSize: 13),
                           ),
                         ),
@@ -118,7 +118,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       final res = await http.get(
         Uri.parse("${AppConstants.apiBaseUrl}/api/v1/tickets"),
         headers: {"Authorization": "Bearer ${widget.token}"},
-      );
+      ).timeout(const Duration(seconds: 6));
       if (res.statusCode == 200) {
         final List data = jsonDecode(res.body);
         if (mounted) {
@@ -141,7 +141,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     try {
       final res = await http.get(
         Uri.parse("${AppConstants.apiBaseUrl}/api/v1/knowledge-base"),
-      );
+      ).timeout(const Duration(seconds: 6));
       if (res.statusCode == 200) {
         final List data = jsonDecode(res.body);
         if (mounted) {
@@ -210,8 +210,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final waitingCount = _tickets.where((t) => t.status == "WAITING_AGENT").length;
+
     return Scaffold(
-      backgroundColor: AppConstants.bgDark,
+      backgroundColor: AppConstants.bgLight,
       appBar: _buildAppBar(),
       body: IndexedStack(
         index: _currentTabIndex,
@@ -222,28 +224,29 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           _buildSettingsTab(),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: _buildBottomNav(waitingCount),
     );
   }
 
   // --- TOP APP BAR ---
   PreferredSizeWidget _buildAppBar() {
-    String title = "Inbox Percakapan";
-    String subtitle = "Antrean live obrolan pelanggan";
+    String title = "Your inbox";
+    String subtitle = "Antrean obrolan pelanggan";
     if (_currentTabIndex == 1) {
       title = "Direktori Tiket";
-      subtitle = "Manajemen data seluruh tiket kendala";
+      subtitle = "Manajemen seluruh data tiket";
     } else if (_currentTabIndex == 2) {
       title = "Basis Pengetahuan";
-      subtitle = "15 Panduan dan solusi resmi CIHEUL";
+      subtitle = "15 Panduan & solusi resmi CIHEUL";
     } else if (_currentTabIndex == 3) {
       title = "Pengaturan & Diagnostik";
-      subtitle = "Profil agen & status infrastruktur";
+      subtitle = "Profil agen & status sistem";
     }
 
     return AppBar(
-      backgroundColor: AppConstants.cardDark,
+      backgroundColor: AppConstants.cardLight,
       elevation: 0,
+      scrolledUnderElevation: 0,
       leading: Padding(
         padding: const EdgeInsets.only(left: 12.0, top: 10.0, bottom: 10.0, right: 4.0),
         child: ClipRRect(
@@ -259,7 +262,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppConstants.textPrimary,
+              letterSpacing: -0.2,
+            ),
           ),
           Text(
             subtitle,
@@ -282,48 +290,64 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(color: AppConstants.borderDark, height: 1),
+        child: Container(color: AppConstants.borderLight, height: 1),
       ),
     );
   }
 
-  // --- BOTTOM NAVIGATION BAR ---
-  Widget _buildBottomNav() {
+  // --- BOTTOM NAVIGATION BAR WITH WHATSAPP-STYLE BADGE ---
+  Widget _buildBottomNav(int waitingCount) {
     return Container(
       decoration: const BoxDecoration(
-        color: AppConstants.cardDark,
-        border: Border(top: BorderSide(color: AppConstants.borderDark)),
+        color: AppConstants.cardLight,
+        border: Border(top: BorderSide(color: AppConstants.borderLight)),
       ),
       child: SafeArea(
         child: BottomNavigationBar(
           currentIndex: _currentTabIndex,
           onTap: (idx) => setState(() => _currentTabIndex = idx),
-          backgroundColor: AppConstants.cardDark,
+          backgroundColor: AppConstants.cardLight,
           selectedItemColor: AppConstants.primaryBlue,
           unselectedItemColor: AppConstants.textMuted,
           selectedFontSize: 11,
           unselectedFontSize: 11,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.forum_outlined, size: 20),
-              activeIcon: Icon(Icons.forum, size: 20),
+              icon: Badge(
+                label: Text(
+                  '$waitingCount',
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+                isLabelVisible: waitingCount > 0,
+                backgroundColor: const Color(0xFF0284C7),
+                child: const Icon(Icons.inbox_outlined, size: 21),
+              ),
+              activeIcon: Badge(
+                label: Text(
+                  '$waitingCount',
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+                isLabelVisible: waitingCount > 0,
+                backgroundColor: const Color(0xFF0284C7),
+                child: const Icon(Icons.inbox, size: 21),
+              ),
               label: "Inbox",
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.view_list_outlined, size: 20),
-              activeIcon: Icon(Icons.view_list, size: 20),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.confirmation_number_outlined, size: 21),
+              activeIcon: Icon(Icons.confirmation_number, size: 21),
               label: "Tiket",
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.menu_book_outlined, size: 20),
-              activeIcon: Icon(Icons.menu_book, size: 20),
-              label: "Solusi KB",
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.menu_book_outlined, size: 21),
+              activeIcon: Icon(Icons.menu_book, size: 21),
+              label: "FAQ / KB",
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.tune_outlined, size: 20),
-              activeIcon: Icon(Icons.tune, size: 20),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined, size: 21),
+              activeIcon: Icon(Icons.settings, size: 21),
               label: "Pengaturan",
             ),
           ],
@@ -333,64 +357,140 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   // ==========================================
-  // TAB 1: INBOX CONVERSATIONS
+  // TAB 1: INBOX CONVERSATIONS (MATCHING IMAGE 1)
   // ==========================================
   Widget _buildInboxTab() {
+    final openCount = _tickets.where((t) => t.status != "RESOLVED" && t.status != "CLOSED").length;
     final waitingCount = _tickets.where((t) => t.status == "WAITING_AGENT").length;
-    final activeCount = _tickets.where((t) => t.status == "AGENT_ACTIVE").length;
 
     return Column(
       children: [
-        // Counters Banner
+        // Sub-Header Bar matching Image 1: "Your inbox" & "3 Open" pill
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: const Color(0xFF0F172A),
+          decoration: const BoxDecoration(
+            color: AppConstants.cardLight,
+            border: Border(bottom: BorderSide(color: AppConstants.borderSubtle)),
+          ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildBadgeCount("Menunggu", waitingCount, const Color(0xFFFEF3C7), const Color(0xFF92400E)),
-              const SizedBox(width: 8),
-              _buildBadgeCount("Ditangani CS", activeCount, const Color(0xFFE0F2FE), const Color(0xFF0369A1)),
-              const Spacer(),
-              Text(
-                "Total ${_tickets.length} Tiket",
-                style: const TextStyle(color: AppConstants.textMuted, fontSize: 11),
+              Row(
+                children: [
+                  const Text(
+                    "Daftar Percakapan",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppConstants.textPrimary,
+                    ),
+                  ),
+                  if (waitingCount > 0) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
+                      ),
+                      child: Text(
+                        "$waitingCount Perlu Ditangani",
+                        style: const TextStyle(
+                          color: Color(0xFF92400E),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppConstants.badgeBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppConstants.borderLight),
+                ),
+                child: Text(
+                  "$openCount Open",
+                  style: const TextStyle(
+                    color: AppConstants.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
         ),
 
-        // Filter Bar
+        // Filter Bar matching Image 1: Last activity · Semua · Menunggu · Selesai
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: AppConstants.cardDark,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip("Semua", "ALL", _inboxFilter, (v) => setState(() => _inboxFilter = v)),
-                _buildFilterChip("Menunggu CS", "WAITING_AGENT", _inboxFilter, (v) => setState(() => _inboxFilter = v)),
-                _buildFilterChip("CS Aktif", "AGENT_ACTIVE", _inboxFilter, (v) => setState(() => _inboxFilter = v)),
-                _buildFilterChip("Selesai", "RESOLVED", _inboxFilter, (v) => setState(() => _inboxFilter = v)),
-              ],
-            ),
+          decoration: const BoxDecoration(
+            color: AppConstants.cardLight,
+            border: Border(bottom: BorderSide(color: AppConstants.borderLight)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Last activity",
+                style: TextStyle(fontSize: 11, color: AppConstants.textMuted, fontWeight: FontWeight.w500),
+              ),
+              Row(
+                children: [
+                  _buildTextFilter("Semua", "ALL"),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6),
+                    child: Text("·", style: TextStyle(color: AppConstants.textMuted, fontSize: 12)),
+                  ),
+                  _buildTextFilter("Menunggu", "WAITING_AGENT"),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6),
+                    child: Text("·", style: TextStyle(color: AppConstants.textMuted, fontSize: 12)),
+                  ),
+                  _buildTextFilter("Selesai", "RESOLVED"),
+                ],
+              ),
+            ],
           ),
         ),
 
+        // Scrollable List
         Expanded(
           child: _isLoadingTickets
               ? const Center(child: CircularProgressIndicator(color: AppConstants.primaryBlue))
               : _filteredInboxTickets.isEmpty
-                  ? _buildEmptyState("Tidak ada percakapan pada filter ini.")
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.inbox, size: 48, color: Colors.grey[300]),
+                          const SizedBox(height: 12),
+                          const Text(
+                            "Tidak ada tiket dalam antrean ini",
+                            style: TextStyle(color: AppConstants.textMuted, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    )
                   : RefreshIndicator(
-                      onRefresh: _fetchTickets,
                       color: AppConstants.primaryBlue,
+                      backgroundColor: Colors.white,
+                      onRefresh: _fetchTickets,
                       child: ListView.separated(
-                        padding: const EdgeInsets.all(16),
                         itemCount: _filteredInboxTickets.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, __) => const Divider(
+                          color: AppConstants.borderSubtle,
+                          height: 1,
+                          indent: 72,
+                        ),
                         itemBuilder: (ctx, idx) {
                           final ticket = _filteredInboxTickets[idx];
-                          return _buildInboxTicketCard(ticket);
+                          return _buildInboxTicketTile(ticket);
                         },
                       ),
                     ),
@@ -399,137 +499,169 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  Widget _buildBadgeCount(String label, int count, Color bg, Color text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
+  Widget _buildTextFilter(String label, String value) {
+    final isActive = _inboxFilter == value;
+    return GestureDetector(
+      onTap: () => setState(() => _inboxFilter = value),
       child: Text(
-        "$count $label",
-        style: TextStyle(color: text, fontSize: 11, fontWeight: FontWeight.bold),
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+          color: isActive ? AppConstants.textPrimary : AppConstants.textMuted,
+        ),
       ),
     );
   }
 
-  Widget _buildInboxTicketCard(Ticket ticket) {
-    final statusColor = AppConstants.getStatusColor(ticket.status);
-    final statusLabel = AppConstants.getStatusLabel(ticket.status);
-    final formattedTime = DateFormat('HH:mm').format(ticket.updatedAt);
-    final initials = ticket.customerName.isNotEmpty
-        ? ticket.customerName.substring(0, ticket.customerName.length >= 2 ? 2 : 1).toUpperCase()
-        : "PL";
+  // Single Conversation Tile matching Image 1
+  Widget _buildInboxTicketTile(Ticket ticket) {
+    final initials = _getInitials(ticket.customerName);
+    final timeStr = _formatRelativeTime(ticket.updatedAt);
+    final isWaiting = ticket.status == "WAITING_AGENT";
 
-    return InkWell(
-      onTap: () => _openChat(ticket),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppConstants.cardDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppConstants.borderDark),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: const Color(0xFF334155),
-              child: Text(
-                initials,
-                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+    return Material(
+      color: isWaiting ? const Color(0xFFFEFCE8) : AppConstants.cardLight,
+      child: InkWell(
+        onTap: () => _openChat(ticket),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Circle Avatar with Initials matching Image 1
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: isWaiting ? const Color(0xFFFEF08A) : AppConstants.avatarBg,
+                child: Text(
+                  initials,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isWaiting ? const Color(0xFF854D0E) : AppConstants.avatarText,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          ticket.customerName,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppConstants.textLight),
-                          overflow: TextOverflow.ellipsis,
+              const SizedBox(width: 12),
+
+              // Content: Name & Subject snippet
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            ticket.customerName,
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppConstants.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      Text(
-                        formattedTime,
-                        style: const TextStyle(fontSize: 10.5, color: AppConstants.textMuted),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    ticket.subject,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFFCBD5E1), height: 1.3),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: statusColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                        Text(
+                          timeStr,
+                          style: const TextStyle(fontSize: 11, color: AppConstants.textMuted),
                         ),
-                        child: Text(
-                          statusLabel,
-                          style: TextStyle(color: statusColor, fontSize: 9.5, fontWeight: FontWeight.bold),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      ticket.subject,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppConstants.textSecondary,
+                        height: 1.35,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppConstants.getStatusBgColor(ticket.status),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            AppConstants.getStatusLabel(ticket.status),
+                            style: TextStyle(
+                              color: AppConstants.getStatusColor(ticket.status),
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        ticket.category,
-                        style: const TextStyle(color: AppConstants.textMuted, fontSize: 10, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 6),
+                        Text(
+                          "#${ticket.id.substring(0, ticket.id.length > 8 ? 8 : ticket.id.length)}",
+                          style: const TextStyle(color: AppConstants.textMuted, fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+
+              // Right side WhatsApp-style Unread / Attention Badge
+              if (isWaiting)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0, top: 4.0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0284C7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      "CS",
+                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   // ==========================================
-  // TAB 2: TICKETS DIRECTORY (TABLE/CATALOG)
+  // TAB 2: TICKETS DIRECTORY (LIGHT THEME)
   // ==========================================
   Widget _buildTicketsDirectoryTab() {
     return Column(
       children: [
-        // Search & Filter Box
+        // Search & Filter header
         Container(
-          padding: const EdgeInsets.all(16),
-          color: AppConstants.cardDark,
+          padding: const EdgeInsets.all(14),
+          color: AppConstants.cardLight,
           child: Column(
             children: [
               TextField(
-                onChanged: (val) => setState(() => _ticketSearchQuery = val),
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                onChanged: (q) => setState(() => _ticketSearchQuery = q),
+                style: const TextStyle(color: AppConstants.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: "Cari ID tiket, nama pelanggan, subjek...",
+                  hintText: "Cari ID tiket, pelanggan, atau subjek...",
                   hintStyle: const TextStyle(color: AppConstants.textMuted, fontSize: 12),
-                  prefixIcon: const Icon(Icons.search, size: 18, color: AppConstants.textMuted),
+                  prefixIcon: const Icon(Icons.search, color: AppConstants.textMuted, size: 18),
                   filled: true,
-                  fillColor: AppConstants.bgDark,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                  fillColor: AppConstants.bgLight,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppConstants.borderDark),
+                    borderSide: const BorderSide(color: AppConstants.borderLight),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppConstants.borderDark),
+                    borderSide: const BorderSide(color: AppConstants.borderLight),
                   ),
                 ),
               ),
@@ -538,29 +670,102 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildFilterChip("Semua", "ALL", _ticketStatusFilter, (v) => setState(() => _ticketStatusFilter = v)),
-                    _buildFilterChip("Menunggu", "WAITING_AGENT", _ticketStatusFilter, (v) => setState(() => _ticketStatusFilter = v)),
-                    _buildFilterChip("Aktif", "AGENT_ACTIVE", _ticketStatusFilter, (v) => setState(() => _ticketStatusFilter = v)),
-                    _buildFilterChip("Selesai", "RESOLVED", _ticketStatusFilter, (v) => setState(() => _ticketStatusFilter = v)),
+                    _buildPillFilter("Semua Status", "ALL"),
+                    _buildPillFilter("Menunggu CS", "WAITING_AGENT"),
+                    _buildPillFilter("CS Aktif", "AGENT_ACTIVE"),
+                    _buildPillFilter("Selesai", "RESOLVED"),
                   ],
                 ),
               ),
             ],
           ),
         ),
+        const Divider(color: AppConstants.borderLight, height: 1),
 
+        // List
         Expanded(
           child: _isLoadingTickets
               ? const Center(child: CircularProgressIndicator(color: AppConstants.primaryBlue))
               : _filteredDirectoryTickets.isEmpty
-                  ? _buildEmptyState("Tidak ada tiket yang cocok dengan pencarian.")
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(16),
+                  ? const Center(
+                      child: Text(
+                        "Tidak ada tiket yang cocok",
+                        style: TextStyle(color: AppConstants.textMuted, fontSize: 13),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(12),
                       itemCount: _filteredDirectoryTickets.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (ctx, idx) {
                         final t = _filteredDirectoryTickets[idx];
-                        return _buildDirectoryCard(t);
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppConstants.cardLight,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppConstants.borderLight),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: AppConstants.getStatusBgColor(t.status),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      AppConstants.getStatusLabel(t.status),
+                                      style: TextStyle(
+                                        color: AppConstants.getStatusColor(t.status),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    DateFormat('dd MMM HH:mm').format(t.updatedAt),
+                                    style: const TextStyle(fontSize: 11, color: AppConstants.textMuted),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                t.subject,
+                                style: const TextStyle(
+                                  color: AppConstants.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  const Icon(Icons.person_outline, size: 14, color: AppConstants.textMuted),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    t.customerName,
+                                    style: const TextStyle(fontSize: 12, color: AppConstants.textSecondary),
+                                  ),
+                                  const Spacer(),
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    onPressed: () => _openChat(t),
+                                    child: const Text("Buka Chat", style: TextStyle(color: AppConstants.primaryBlue, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
                       },
                     ),
         ),
@@ -568,140 +773,56 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  Widget _buildDirectoryCard(Ticket t) {
-    final statusColor = AppConstants.getStatusColor(t.status);
-    final statusLabel = AppConstants.getStatusLabel(t.status);
-    final dateStr = DateFormat('dd MMM yyyy, HH:mm').format(t.updatedAt);
-
-    Color priorityColor = Colors.grey;
-    if (t.priority == "HIGH" || t.priority == "URGENT") priorityColor = Colors.redAccent;
-    if (t.priority == "MEDIUM") priorityColor = Colors.amber;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppConstants.cardDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppConstants.borderDark),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppConstants.borderDark,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  "#${t.id.substring(0, t.id.length >= 8 ? 8 : t.id.length)}",
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 10, color: Colors.white70),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: priorityColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  t.priority,
-                  style: TextStyle(color: priorityColor, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            t.customerName,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppConstants.textLight),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            t.subject,
-            style: const TextStyle(fontSize: 12.5, color: Color(0xFFCBD5E1)),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      statusLabel,
-                      style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    t.category,
-                    style: const TextStyle(color: AppConstants.textMuted, fontSize: 10.5),
-                  ),
-                ],
-              ),
-              Text(
-                dateStr,
-                style: const TextStyle(color: AppConstants.textMuted, fontSize: 10),
-              ),
-            ],
-          ),
-          const Divider(color: AppConstants.borderDark, height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                onPressed: () => _openChat(t),
-                icon: const Icon(Icons.chat_bubble_outline, size: 15, color: AppConstants.primaryBlue),
-                label: const Text(
-                  "Buka di Chat",
-                  style: TextStyle(color: AppConstants.primaryBlue, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ],
+  Widget _buildPillFilter(String label, String value) {
+    final isSelected = _ticketStatusFilter == value;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6.0),
+      child: FilterChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (_) => setState(() => _ticketStatusFilter = value),
+        selectedColor: const Color(0xFFE0F2FE),
+        backgroundColor: AppConstants.bgLight,
+        side: BorderSide(
+          color: isSelected ? AppConstants.primaryBlue : AppConstants.borderLight,
+        ),
+        labelStyle: TextStyle(
+          color: isSelected ? AppConstants.primaryBlue : AppConstants.textSecondary,
+          fontSize: 11,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
       ),
     );
   }
 
   // ==========================================
-  // TAB 3: KNOWLEDGE BASE (15 SOLUSI RESMI)
+  // TAB 3: KNOWLEDGE BASE (LIGHT THEME)
   // ==========================================
   Widget _buildKnowledgeBaseTab() {
     return Column(
       children: [
-        // Search & Filter Box
         Container(
-          padding: const EdgeInsets.all(16),
-          color: AppConstants.cardDark,
+          padding: const EdgeInsets.all(14),
+          color: AppConstants.cardLight,
           child: Column(
             children: [
               TextField(
-                onChanged: (val) => setState(() => _kbSearchQuery = val),
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                onChanged: (q) => setState(() => _kbSearchQuery = q),
+                style: const TextStyle(color: AppConstants.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: "Cari pertanyaan atau solusi KB...",
+                  hintText: "Cari solusi panduan dan FAQ...",
                   hintStyle: const TextStyle(color: AppConstants.textMuted, fontSize: 12),
-                  prefixIcon: const Icon(Icons.search, size: 18, color: AppConstants.textMuted),
+                  prefixIcon: const Icon(Icons.search, color: AppConstants.textMuted, size: 18),
                   filled: true,
-                  fillColor: AppConstants.bgDark,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                  fillColor: AppConstants.bgLight,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppConstants.borderDark),
+                    borderSide: const BorderSide(color: AppConstants.borderLight),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppConstants.borderDark),
+                    borderSide: const BorderSide(color: AppConstants.borderLight),
                   ),
                 ),
               ),
@@ -710,46 +831,90 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildFilterChip("Semua", "ALL", _kbCategoryFilter, (v) => setState(() => _kbCategoryFilter = v)),
-                    _buildFilterChip("Akun & Akses", "ACCOUNT", _kbCategoryFilter, (v) => setState(() => _kbCategoryFilter = v)),
-                    _buildFilterChip("Tagihan", "BILLING", _kbCategoryFilter, (v) => setState(() => _kbCategoryFilter = v)),
-                    _buildFilterChip("Teknis & API", "TECHNICAL", _kbCategoryFilter, (v) => setState(() => _kbCategoryFilter = v)),
-                    _buildFilterChip("Umum", "GENERAL", _kbCategoryFilter, (v) => setState(() => _kbCategoryFilter = v)),
+                    _buildKBCategoryChip("Semua Kategori", "ALL"),
+                    _buildKBCategoryChip("Akun & Profil", "ACCOUNT"),
+                    _buildKBCategoryChip("Pembayaran", "BILLING"),
+                    _buildKBCategoryChip("Kendala Teknis", "TECHNICAL"),
+                    _buildKBCategoryChip("Informasi Umum", "GENERAL"),
                   ],
                 ),
               ),
             ],
           ),
         ),
-
-        // Count Banner
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: const Color(0xFF0F172A),
-          child: Row(
-            children: [
-              const Icon(Icons.verified_outlined, size: 14, color: AppConstants.primaryBlue),
-              const SizedBox(width: 6),
-              Text(
-                "Menampilkan ${_filteredKBArticles.length} artikel solusi resmi CIHEUL",
-                style: const TextStyle(color: AppConstants.textMuted, fontSize: 11),
-              ),
-            ],
-          ),
-        ),
+        const Divider(color: AppConstants.borderLight, height: 1),
 
         Expanded(
           child: _isLoadingKB
               ? const Center(child: CircularProgressIndicator(color: AppConstants.primaryBlue))
               : _filteredKBArticles.isEmpty
-                  ? _buildEmptyState("Tidak ada artikel solusi yang cocok.")
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(16),
+                  ? const Center(
+                      child: Text(
+                        "Tidak ada panduan ditemukan",
+                        style: TextStyle(color: AppConstants.textMuted, fontSize: 13),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(12),
                       itemCount: _filteredKBArticles.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (ctx, idx) {
                         final article = _filteredKBArticles[idx];
-                        return _buildKBCard(article);
+                        return Card(
+                          color: AppConstants.cardLight,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: AppConstants.borderLight),
+                          ),
+                          child: ExpansionTile(
+                            tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                            childrenPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            title: Text(
+                              article.question,
+                              style: const TextStyle(
+                                color: AppConstants.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                            subtitle: Text(
+                              article.category,
+                              style: const TextStyle(color: AppConstants.primaryBlue, fontSize: 10.5, fontWeight: FontWeight.w600),
+                            ),
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppConstants.bgLight,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppConstants.borderLight),
+                                ),
+                                child: Text(
+                                  article.answer,
+                                  style: const TextStyle(color: AppConstants.textSecondary, fontSize: 12.5, height: 1.45),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
+                                  icon: const Icon(Icons.copy, size: 14, color: AppConstants.primaryBlue),
+                                  label: const Text("Salin Solusi", style: TextStyle(color: AppConstants.primaryBlue, fontSize: 12)),
+                                  onPressed: () {
+                                    Clipboard.setData(ClipboardData(text: article.answer));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Solusi berhasil disalin ke clipboard."),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
                       },
                     ),
         ),
@@ -757,110 +922,30 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  Widget _buildKBCard(KnowledgeBaseArticle article) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppConstants.cardDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppConstants.borderDark),
-      ),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryBlue.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      article.category,
-                      style: const TextStyle(color: AppConstants.primaryBlue, fontSize: 9.5, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                article.question,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppConstants.textLight),
-              ),
-            ],
-          ),
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppConstants.bgDark,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppConstants.borderDark),
-                    ),
-                    child: Text(
-                      article.answer,
-                      style: const TextStyle(fontSize: 12.5, color: Color(0xFFCBD5E1), height: 1.45),
-                    ),
-                  ),
-                  if (article.keywords.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      "Kata Kunci: ${article.keywords}",
-                      style: const TextStyle(fontSize: 10.5, color: AppConstants.textMuted),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: article.answer));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: const Color(0xFF065F46),
-                              content: const Text("Jawaban KB berhasil disalin ke clipboard!"),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.copy, size: 14, color: Colors.white),
-                        label: const Text(
-                          "Salin Solusi",
-                          style: TextStyle(fontSize: 11.5, color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E293B),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(color: AppConstants.borderDark),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Widget _buildKBCategoryChip(String label, String value) {
+    final isSelected = _kbCategoryFilter == value;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6.0),
+      child: FilterChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (_) => setState(() => _kbCategoryFilter = value),
+        selectedColor: const Color(0xFFE0F2FE),
+        backgroundColor: AppConstants.bgLight,
+        side: BorderSide(
+          color: isSelected ? AppConstants.primaryBlue : AppConstants.borderLight,
+        ),
+        labelStyle: TextStyle(
+          color: isSelected ? AppConstants.primaryBlue : AppConstants.textSecondary,
+          fontSize: 11,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
     );
   }
 
   // ==========================================
-  // TAB 4: SETTINGS & DIAGNOSTICS
+  // TAB 4: SETTINGS & DIAGNOSTICS (LIGHT THEME)
   // ==========================================
   Widget _buildSettingsTab() {
     return ListView(
@@ -868,47 +953,35 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       children: [
         // Profile Card
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppConstants.cardDark,
+            color: AppConstants.cardLight,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppConstants.borderDark),
+            border: Border.all(color: AppConstants.borderLight),
           ),
           child: Row(
             children: [
               CircleAvatar(
-                radius: 28,
-                backgroundColor: AppConstants.primaryBlue,
+                radius: 24,
+                backgroundColor: const Color(0xFFE0F2FE),
                 child: Text(
-                  widget.agentName.substring(0, widget.agentName.length >= 2 ? 2 : 1).toUpperCase(),
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  _getInitials(widget.agentName),
+                  style: const TextStyle(color: AppConstants.primaryBlue, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       widget.agentName,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(color: AppConstants.textPrimary, fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                     const SizedBox(height: 2),
                     const Text(
-                      "cs@ciheul.com",
-                      style: TextStyle(fontSize: 12, color: AppConstants.textMuted),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0284C7).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        "CUSTOMER SUPPORT",
-                        style: TextStyle(color: AppConstants.primaryBlue, fontSize: 9.5, fontWeight: FontWeight.bold),
-                      ),
+                      "Spesialis Layanan CS (Aktif)",
+                      style: TextStyle(color: AppConstants.textMuted, fontSize: 11),
                     ),
                   ],
                 ),
@@ -916,201 +989,88 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ],
           ),
         ),
-
         const SizedBox(height: 16),
 
-        // System Diagnostics Card
+        // System Diagnostics
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppConstants.cardDark,
+            color: AppConstants.cardLight,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppConstants.borderDark),
+            border: Border.all(color: AppConstants.borderLight),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "Diagnostik Layanan Sistem",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                "Diagnostik Layanan Realtime",
+                style: TextStyle(color: AppConstants.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
               ),
-              const SizedBox(height: 14),
-              _buildDiagRow("Server API Host", AppConstants.apiBaseUrl, Colors.greenAccent),
-              _buildDiagRow("WebSocket Gateway", "${AppConstants.wsBaseUrl}/ws/agents", Colors.greenAccent),
-              _buildDiagRow("Backend Framework", "FastAPI 0.115 (Python 3.10)", Colors.greenAccent),
-              _buildDiagRow("Database Mesin", "SQLite Relasional", Colors.greenAccent),
-              _buildDiagRow("Enkripsi & Masking", "PII Redaction Aktif (NIK/Card/Telp)", Colors.greenAccent),
-              _buildDiagRow("SLA Standar", "Maksimal 15 Menit Respon", Colors.amberAccent),
+              const SizedBox(height: 12),
+              _buildDiagRow("FastAPI REST Service", "Terhubung (Port 8000)", Icons.check_circle_outline, const Color(0xFF16A34A)),
+              const Divider(color: AppConstants.borderSubtle, height: 16),
+              _buildDiagRow("WebSocket Gateway", "/ws/agents Active", Icons.sync, AppConstants.primaryBlue),
+              const Divider(color: AppConstants.borderSubtle, height: 16),
+              _buildDiagRow("SQLite Database", "Schema Initialized", Icons.storage, const Color(0xFF16A34A)),
+              const Divider(color: AppConstants.borderSubtle, height: 16),
+              _buildDiagRow("PII Masking Sanitizer", "Regex Active", Icons.security, const Color(0xFF16A34A)),
+              const Divider(color: AppConstants.borderSubtle, height: 16),
+              _buildDiagRow("Target Host", AppConstants.host, Icons.lan_outlined, AppConstants.textSecondary),
             ],
           ),
         ),
-
-        const SizedBox(height: 16),
-
-        // Host Switcher Action
-        Container(
-          decoration: BoxDecoration(
-            color: AppConstants.cardDark,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppConstants.borderDark),
-          ),
-          child: ListTile(
-            leading: const Icon(Icons.dns_outlined, color: AppConstants.primaryBlue),
-            title: const Text("Ubah Server Host & Port", style: TextStyle(color: Colors.white, fontSize: 13.5)),
-            subtitle: Text(AppConstants.host, style: const TextStyle(color: AppConstants.textMuted, fontSize: 11)),
-            trailing: const Icon(Icons.chevron_right, color: AppConstants.textMuted),
-            onTap: _showHostDialog,
-          ),
-        ),
-
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
 
         // Logout Button
-        ElevatedButton.icon(
-          onPressed: _confirmLogout,
-          icon: const Icon(Icons.logout, size: 16, color: Colors.redAccent),
-          label: const Text(
-            "Keluar dari Workspace",
-            style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold),
+        OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Color(0xFFFECACA)),
+            backgroundColor: const Color(0xFFFEF2F2),
+            foregroundColor: const Color(0xFFDC2626),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red.withValues(alpha: 0.1),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-              side: BorderSide(color: Colors.red.withValues(alpha: 0.3)),
-            ),
-          ),
+          icon: const Icon(Icons.logout, size: 18),
+          label: const Text("Keluar (Logout)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildDiagRow(String label, String value, Color statusColor) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: AppConstants.textMuted, fontSize: 12)),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              value,
-              style: TextStyle(color: statusColor, fontSize: 11.5, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.end,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
+  Widget _buildDiagRow(String title, String val, IconData icon, Color iconColor) {
+    return Row(
+      children: [
+        Icon(icon, color: iconColor, size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(title, style: const TextStyle(color: AppConstants.textPrimary, fontSize: 12.5)),
+        ),
+        Text(val, style: TextStyle(color: iconColor, fontSize: 11, fontWeight: FontWeight.w600)),
+      ],
     );
   }
 
-  void _showHostDialog() {
-    final ctrl = TextEditingController(text: AppConstants.host);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppConstants.cardDark,
-        title: const Text("Ubah Host Server", style: TextStyle(color: Colors.white, fontSize: 15)),
-        content: TextField(
-          controller: ctrl,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: const InputDecoration(
-            hintText: "Contoh: localhost:8000 atau 192.168.1.10:8000",
-            hintStyle: TextStyle(color: AppConstants.textMuted, fontSize: 12),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Batal", style: TextStyle(color: AppConstants.textMuted)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                AppConstants.host = ctrl.text.trim();
-              });
-              Navigator.pop(ctx);
-              _fetchTickets();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primaryBlue),
-            child: const Text("Simpan", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+  String _getInitials(String name) {
+    final parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return "${parts[0][0]}${parts[1][0]}".toUpperCase();
+    } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+      return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
+    }
+    return "CS";
   }
 
-  void _confirmLogout() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppConstants.cardDark,
-        title: const Text("Konfirmasi Keluar", style: TextStyle(color: Colors.white, fontSize: 15)),
-        content: const Text(
-          "Apakah Anda yakin ingin keluar dari workspace agen CIHEUL?",
-          style: TextStyle(color: AppConstants.textMuted, fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Batal", style: TextStyle(color: AppConstants.textMuted)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text("Keluar", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- HELPER WIDGETS ---
-  Widget _buildFilterChip(String label, String value, String currentVal, Function(String) onSelect) {
-    final isSelected = currentVal == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: FilterChip(
-        label: Text(label),
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.white : AppConstants.textMuted,
-          fontSize: 11.5,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-        selected: isSelected,
-        selectedColor: AppConstants.primaryBlue,
-        backgroundColor: AppConstants.borderDark,
-        onSelected: (_) => onSelect(value),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(String msg) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.inbox_outlined, size: 40, color: AppConstants.textMuted),
-            const SizedBox(height: 12),
-            Text(
-              msg,
-              style: const TextStyle(color: AppConstants.textMuted, fontSize: 12.5),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
+  String _formatRelativeTime(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return "Baru saja";
+    if (diff.inMinutes < 60) return "${diff.inMinutes}m";
+    if (diff.inHours < 24) return "${diff.inHours}h";
+    return "${diff.inDays}d";
   }
 }

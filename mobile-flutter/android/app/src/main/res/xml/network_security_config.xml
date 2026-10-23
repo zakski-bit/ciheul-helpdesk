@@ -1,16 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Base config disallows cleartext HTTP traffic for production -->
-    <base-config cleartextTrafficPermitted="false">
+    <!-- Cleartext permitted for local development, USB reverse, and Wi-Fi LAN testing -->
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
+            <certificates src="user" />
         </trust-anchors>
     </base-config>
-
-    <!-- Cleartext permitted exclusively for local development and emulator loopbacks -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">10.0.2.2</domain>
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">127.0.0.1</domain>
-    </domain-config>
 </network-security-config>
