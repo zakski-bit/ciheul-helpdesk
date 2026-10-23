@@ -38,4 +38,35 @@ class AppConstants {
   static const Color accentIndigo = Color(0xFF4F46E5);
   static const Color textLight = Color(0xFFF8FAFC);
   static const Color textMuted = Color(0xFF94A3B8);
+
+  static Color getStatusColor(String status) {
+    switch (status) {
+      case "WAITING_AGENT":
+        return const Color(0xFFF59E0B);
+      case "AGENT_ACTIVE":
+        return const Color(0xFF0284C7);
+      case "RESOLVED":
+      case "CLOSED":
+        return const Color(0xFF10B981);
+      case "BOT_ACTIVE":
+      default:
+        return const Color(0xFF6366F1);
+    }
+  }
+
+  static String getStatusLabel(String status) {
+    switch (status) {
+      case "WAITING_AGENT":
+        return "MENUNGGU CS";
+      case "AGENT_ACTIVE":
+        return "CS AKTIF";
+      case "RESOLVED":
+        return "SELESAI";
+      case "CLOSED":
+        return "DITUTUP";
+      case "BOT_ACTIVE":
+      default:
+        return "AI BOT";
+    }
+  }
 }
