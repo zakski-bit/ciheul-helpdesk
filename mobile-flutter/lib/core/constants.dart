@@ -17,16 +17,18 @@ class AppConstants {
     }
   }
 
-  static bool get _isLocalOrInsecure =>
-      _activeHost.contains('localhost') ||
-      _activeHost.contains('10.0.2.2') ||
-      _activeHost.contains('127.0.0.1') ||
-      _activeHost.contains(':8000') ||
-      _activeHost.startsWith('192.168.') ||
-      _activeHost.startsWith('10.');
+  static bool get _isLocalOrInsecure {
+    final clean = _activeHost.toLowerCase();
+    return clean.contains('localhost') ||
+           clean.contains('10.0.2.2') ||
+           clean.contains('127.0.0.1') ||
+           clean.contains(':8000') ||
+           clean.startsWith('192.168.') ||
+           clean.startsWith('10.');
+  }
 
-  static String get protocol => _isLocalOrInsecure ? 'http' : (isProduction ? 'https' : 'http');
-  static String get wsProtocol => _isLocalOrInsecure ? 'ws' : (isProduction ? 'wss' : 'ws');
+  static String get protocol => _isLocalOrInsecure ? 'http' : 'https';
+  static String get wsProtocol => _isLocalOrInsecure ? 'ws' : 'wss';
 
   static String get apiBaseUrl => "$protocol://$host";
   static String get wsBaseUrl => "$wsProtocol://$host";

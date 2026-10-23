@@ -1,10 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Cleartext permitted for local development, USB reverse, and Wi-Fi LAN testing -->
-    <base-config cleartextTrafficPermitted="true">
+    <!-- Base config: Cleartext HTTP is BLOCKED by default for public domains, system certs only -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Cleartext permitted ONLY for explicit local development and USB ADB reverse / local Wi-Fi LAN -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">10.250.219.238</domain>
+    </domain-config>
+
+    <!-- Debug overrides: user certificates permitted strictly during debug compilation -->
+    <debug-overrides>
         <trust-anchors>
             <certificates src="system" />
             <certificates src="user" />
         </trust-anchors>
-    </base-config>
+    </debug-overrides>
 </network-security-config>

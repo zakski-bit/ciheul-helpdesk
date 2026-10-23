@@ -96,6 +96,30 @@ flutter build apk --release
 
 ---
 
+## Catatan Evaluasi & Transparansi Kesiapan Produksi (Evaluation & Deployment Guide)
+
+Proyek ini dibangun sebagai prototipe operasional menyeluruh untuk take-home programming test. Untuk keperluan pengujian lokal, sistem berjalan langsung di lingkungan pengembangan tanpa ketergantungan layanan eksternal. Berikut adalah panduan evaluasi dan langkah migrasi ke tahap produksi penuh (*production deployment*):
+
+### 1. Konfigurasi Jaringan & Host Aplikasi Mobile
+* **Uji Coba Lokal (Assessment Mode):**
+  * Secara default, aplikasi mobile diarahkan ke host lokal `127.0.0.1:8000` (menggunakan `adb reverse tcp:8000 tcp:8000` saat tersambung kabel USB) atau `10.250.219.238:8000` pada jaringan Wi-Fi lokal.
+  * File `network_security_config.xml` secara ketat membatasi trafik HTTP teks-terbuka (*cleartext*) **hanya** untuk host loopback lokal (`127.0.0.1`, `localhost`, `10.0.2.2`) dan IP LAN terdaftar. Seluruh domain publik di internet diwajibkan menggunakan HTTPS terenkripsi.
+* **Distribusi Produksi (Production Mode):**
+  * Kompilasi APK rilis dapat menyuntikkan domain publik backend resmi secara otomatis melalui argumen build:
+    ```bash
+    flutter build apk --release --dart-define=API_HOST="api.helpdesk.ciheul.com"
+    ```
+  * Begitu domain produksi tanpa port lokal dipasang, aplikasi mobile secara otomatis beralih ke protokol aman `https://` dan `wss://`.
+
+### 2. Skalabilitas Multi-Worker & Rate Limiting
+* Pada prototipe saat ini, rate limiter beroperasi secara *in-memory* per-proses FastAPI untuk kemudahan pengujian lokal tanpa memerlukan instalasi Redis.
+* Untuk arsitektur produksi berskala multi-instance / multi-pod di balik Kubernetes atau load balancer, rate limiter dapat dialihkan ke Redis backend (`redis-py` / `aioredis`).
+
+### 3. Keamanan Proxy & Header Terpercaya
+* Endpoint rate limiter memeriksa alamat IP klien dengan memverifikasi header `X-Forwarded-For`. Pada lingkungan produksi di balik reverse proxy (Nginx, Cloudflare, AWS ALB), pastikan proxy dikonfigurasi untuk menghapus atau menimpa header tersebut agar klien tidak dapat memalsukan IP asal.
+
+---
+
 ## Pengujian Otomatis (TDD & Unit Testing)
 
 Jalankan pengujian unit dan integrasi backend menggunakan Pytest:

@@ -168,7 +168,10 @@ jobs:
 
       - name: Build Official Release APK
         working-directory: mobile-flutter
-        run: flutter build apk --release
+        run: |
+          PROD_HOST="${{ vars.PROD_API_HOST || '127.0.0.1:8000' }}"
+          echo "Compiling Release APK for target host: $PROD_HOST"
+          flutter build apk --release --dart-define=API_HOST="$PROD_HOST"
 
       - name: Cleanup Keystore Files
         if: always()

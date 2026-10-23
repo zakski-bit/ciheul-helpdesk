@@ -34,6 +34,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   String _ticketSearchQuery = "";
   String _ticketStatusFilter = "ALL";
   WebSocketChannel? _agentChannel;
+  bool _isWsConnected = false;
+  bool _isRestConnected = false;
 
   // Knowledge Base State
   List<KnowledgeBaseArticle> _kbArticles = [];
@@ -67,8 +69,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         "token": widget.token,
       }));
 
+      if (mounted) setState(() => _isWsConnected = true);
+
       _agentChannel!.stream.listen(
         (message) {
+          if (mounted && !_isWsConnected) setState(() => _isWsConnected = true);
           try {
             final data = jsonDecode(message);
             final event = data['event'];
@@ -102,13 +107,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           } catch (_) {}
         },
         onError: (_) {
+          if (mounted) setState(() => _isWsConnected = false);
           Future.delayed(const Duration(seconds: 4), _connectAgentWebSocket);
         },
         onDone: () {
+          if (mounted) setState(() => _isWsConnected = false);
           Future.delayed(const Duration(seconds: 4), _connectAgentWebSocket);
         },
       );
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) setState(() => _isWsConnected = false);
+    }
   }
 
   // 2. Fetch Tickets from API
@@ -125,13 +134,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           setState(() {
             _tickets = data.map((json) => Ticket.fromJson(json)).toList();
             _isLoadingTickets = false;
+            _isRestConnected = true;
           });
         }
       } else {
-        if (mounted) setState(() => _isLoadingTickets = false);
+        if (mounted) {
+          setState(() {
+            _isLoadingTickets = false;
+            _isRestConnected = false;
+          });
+        }
       }
     } catch (_) {
-      if (mounted) setState(() => _isLoadingTickets = false);
+      if (mounted) {
+        setState(() {
+          _isLoadingTickets = false;
+          _isRestConnected = false;
+        });
+      }
     }
   }
 
@@ -1007,13 +1027,33 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 style: TextStyle(color: AppConstants.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
               ),
               const SizedBox(height: 12),
-              _buildDiagRow("FastAPI REST Service", "Terhubung (Port 8000)", Icons.check_circle_outline, const Color(0xFF16A34A)),
+              _buildDiagRow(
+                "FastAPI REST Service",
+                _isRestConnected ? "Terhubung (${AppConstants.host})" : "Menghubungkan...",
+                _isRestConnected ? Icons.check_circle_outline : Icons.error_outline,
+                _isRestConnected ? const Color(0xFF16A34A) : Colors.amber.shade700,
+              ),
               const Divider(color: AppConstants.borderSubtle, height: 16),
-              _buildDiagRow("WebSocket Gateway", "/ws/agents Active", Icons.sync, AppConstants.primaryBlue),
+              _buildDiagRow(
+                "WebSocket Gateway",
+                _isWsConnected ? "/ws/agents Aktif (Live)" : "Menghubungkan...",
+                _isWsConnected ? Icons.sync : Icons.sync_problem,
+                _isWsConnected ? AppConstants.primaryBlue : Colors.amber.shade700,
+              ),
               const Divider(color: AppConstants.borderSubtle, height: 16),
-              _buildDiagRow("SQLite Database", "Schema Initialized", Icons.storage, const Color(0xFF16A34A)),
+              _buildDiagRow(
+                "Database & ORM",
+                _isRestConnected ? "Tervalidasi & Sinkron" : "Menunggu Server",
+                _isRestConnected ? Icons.storage : Icons.storage_outlined,
+                _isRestConnected ? const Color(0xFF16A34A) : AppConstants.textMuted,
+              ),
               const Divider(color: AppConstants.borderSubtle, height: 16),
-              _buildDiagRow("PII Masking Sanitizer", "Regex Active", Icons.security, const Color(0xFF16A34A)),
+              _buildDiagRow(
+                "PII Masking Sanitizer",
+                _isRestConnected ? "Filter Regex Aktif" : "Menunggu Server",
+                _isRestConnected ? Icons.security : Icons.security_outlined,
+                _isRestConnected ? const Color(0xFF16A34A) : AppConstants.textMuted,
+              ),
               const Divider(color: AppConstants.borderSubtle, height: 16),
               _buildDiagRow("Target Host", AppConstants.host, Icons.lan_outlined, AppConstants.textSecondary),
             ],
@@ -1057,7 +1097,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   String _getInitials(String name) {
-    final parts = name.trim().split(" ");
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
     if (parts.length >= 2) {
       return "${parts[0][0]}${parts[1][0]}".toUpperCase();
     } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
