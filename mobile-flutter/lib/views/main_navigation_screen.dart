@@ -1096,15 +1096,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  String _getInitials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    if (parts.length >= 2) {
-      return "${parts[0][0]}${parts[1][0]}".toUpperCase();
-    } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
-      return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
-    }
-    return "CS";
-  }
+  String _getInitials(String name) => AppConstants.getInitials(name);
 
   String _formatRelativeTime(DateTime dt) {
     final diff = DateTime.now().difference(dt);

@@ -101,15 +101,16 @@ flutter build apk --release
 Proyek ini dibangun sebagai prototipe operasional menyeluruh untuk take-home programming test. Untuk keperluan pengujian lokal, sistem berjalan langsung di lingkungan pengembangan tanpa ketergantungan layanan eksternal. Berikut adalah panduan evaluasi dan langkah migrasi ke tahap produksi penuh (*production deployment*):
 
 ### 1. Konfigurasi Jaringan & Host Aplikasi Mobile
-* **Uji Coba Lokal (Assessment Mode):**
-  * Secara default, aplikasi mobile diarahkan ke host lokal `127.0.0.1:8000` (menggunakan `adb reverse tcp:8000 tcp:8000` saat tersambung kabel USB) atau `10.250.219.238:8000` pada jaringan Wi-Fi lokal.
-  * File `network_security_config.xml` secara ketat membatasi trafik HTTP teks-terbuka (*cleartext*) **hanya** untuk host loopback lokal (`127.0.0.1`, `localhost`, `10.0.2.2`) dan IP LAN terdaftar. Seluruh domain publik di internet diwajibkan menggunakan HTTPS terenkripsi.
-* **Distribusi Produksi (Production Mode):**
-  * Kompilasi APK rilis dapat menyuntikkan domain publik backend resmi secara otomatis melalui argumen build:
+* **Pemisahan Konfigurasi Keamanan Android (Build-Type Security Scoping):**
+  * **Build Release (`src/main/res/xml/network_security_config.xml`):** `cleartextTrafficPermitted="false"` diberlakukan secara mutlak tanpa pengecualian domain manapun, dan hanya mempercayai sertifikat CA sistem. Seluruh komunikasi pada APK rilis wajib melalui HTTPS/WSS.
+  * **Build Debug (`src/debug/res/xml/network_security_config.xml`):** Pengecualian HTTP dibatasi secara ketat hanya pada varian *debug* untuk alamat loopback lokal (`127.0.0.1`, `localhost`, `10.0.2.2`) dan IP LAN terdaftar saat pengujian USB port reverse `tcp:8000`.
+* **Proteksi Workflow CI/CD Rilis (Fail-Fast Verification):**
+  * Workflow kompilasi APK rilis ([`.github/workflows/build-apk.yml`](./.github/workflows/build-apk.yml)) mewajibkan penetapan variabel repositori `PROD_API_HOST`.
+  * Jika variabel host produksi belum disetel di GitHub Variables, pipeline rilis akan otomatis **gagal (*fail-fast*)** untuk mencegah terciptanya file APK rilis cacat yang menunjuk ke loopback `127.0.0.1`.
+  * Perintah kompilasi rilis resmi:
     ```bash
     flutter build apk --release --dart-define=API_HOST="api.helpdesk.ciheul.com"
     ```
-  * Begitu domain produksi tanpa port lokal dipasang, aplikasi mobile secara otomatis beralih ke protokol aman `https://` dan `wss://`.
 
 ### 2. Skalabilitas Multi-Worker & Rate Limiting
 * Pada prototipe saat ini, rate limiter beroperasi secara *in-memory* per-proses FastAPI untuk kemudahan pengujian lokal tanpa memerlukan instalasi Redis.

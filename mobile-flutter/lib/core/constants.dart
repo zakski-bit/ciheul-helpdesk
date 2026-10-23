@@ -33,6 +33,17 @@ class AppConstants {
   static String get apiBaseUrl => "$protocol://$host";
   static String get wsBaseUrl => "$wsProtocol://$host";
 
+  // Format initials safely without index out of range crash on multiple spaces
+  static String getInitials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.length >= 2) {
+      return "${parts[0][0]}${parts[1][0]}".toUpperCase();
+    } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+      return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
+    }
+    return "CS";
+  }
+
   // Web Dashboard Light Theme Colors (Clean White & Slate)
   static const Color bgLight = Color(0xFFF9FAFB);
   static const Color cardLight = Color(0xFFFFFFFF);

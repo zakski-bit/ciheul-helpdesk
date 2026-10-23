@@ -8,34 +8,24 @@ void main() {
     expect(find.text('Masuk ke Helpdesk'), findsOneWidget);
   });
 
-  group('Initials and Name Parsing Tests', () {
-    String getInitials(String name) {
-      final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-      if (parts.length >= 2) {
-        return "${parts[0][0]}${parts[1][0]}".toUpperCase();
-      } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
-        return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
-      }
-      return "CS";
-    }
-
+  group('Initials and Name Parsing Production Tests', () {
     test('parses standard two-word name', () {
-      expect(getInitials('Dewi Putri'), 'DP');
+      expect(AppConstants.getInitials('Dewi Putri'), 'DP');
     });
 
     test('handles multiple consecutive spaces without index out of range crash', () {
-      expect(getInitials('Dewi   Putri'), 'DP');
-      expect(getInitials('  Ahmad   Syahid  '), 'AS');
+      expect(AppConstants.getInitials('Dewi   Putri'), 'DP');
+      expect(AppConstants.getInitials('  Ahmad   Syahid  '), 'AS');
     });
 
     test('handles single word name', () {
-      expect(getInitials('Budi'), 'BU');
-      expect(getInitials('A'), 'A');
+      expect(AppConstants.getInitials('Budi'), 'BU');
+      expect(AppConstants.getInitials('A'), 'A');
     });
 
     test('handles empty or whitespace only input safely', () {
-      expect(getInitials(''), 'CS');
-      expect(getInitials('   '), 'CS');
+      expect(AppConstants.getInitials(''), 'CS');
+      expect(AppConstants.getInitials('   '), 'CS');
     });
   });
 

@@ -169,8 +169,13 @@ jobs:
       - name: Build Official Release APK
         working-directory: mobile-flutter
         run: |
-          PROD_HOST="${{ vars.PROD_API_HOST || '127.0.0.1:8000' }}"
-          echo "Compiling Release APK for target host: $PROD_HOST"
+          PROD_HOST="${{ vars.PROD_API_HOST }}"
+          if [ -z "$PROD_HOST" ]; then
+            echo "FATAL: Repository variable PROD_API_HOST is required for production release APK build."
+            echo "Please configure PROD_API_HOST in GitHub Settings -> Secrets and variables -> Actions -> Variables (e.g. api.helpdesk.ciheul.com)."
+            exit 1
+          fi
+          echo "Compiling Official Release APK for verified production host: $PROD_HOST"
           flutter build apk --release --dart-define=API_HOST="$PROD_HOST"
 
       - name: Cleanup Keystore Files
