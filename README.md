@@ -70,11 +70,12 @@ cd mobile-flutter
 flutter run
 ```
 
-Atau kompilasi file APK rilis secara lokal:
+Atau kompilasi file APK rilis resmi dengan menyuntikkan host produksi:
 ```bash
-flutter build apk --release
+flutter build apk --release --dart-define=API_HOST="api.helpdesk.ciheul.com"
 ```
-*File APK akan berada di: `mobile-flutter/build/app/outputs/flutter-apk/app-release.apk`.*
+*(Untuk keperluan pengujian lokal via USB reverse / Wi-Fi LAN, gunakan build debug: `flutter build apk --debug`)*  
+*File APK hasil build berada di: `mobile-flutter/build/app/outputs/flutter-apk/`.*
 
 ---
 
