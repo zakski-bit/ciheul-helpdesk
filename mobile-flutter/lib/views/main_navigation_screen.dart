@@ -244,6 +244,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return AppBar(
       backgroundColor: AppConstants.cardDark,
       elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 12.0, top: 10.0, bottom: 10.0, right: 4.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            'assets/ciheul-logo.png',
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
