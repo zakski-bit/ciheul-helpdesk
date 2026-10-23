@@ -1,199 +1,200 @@
 <?xml version="1.0" ?>
-<mxfile host="app.diagrams.net" modified="2026-10-22T08:00:00.000Z" agent="Antigravity AI" version="24.0.0" type="device">
+<mxfile host="app.diagrams.net" modified="2026-10-23T03:00:00.000Z" agent="Antigravity AI (Clean Corporate Architecture)" version="24.0.0" type="device">
   <diagram id="ciheul-bpmn-helpdesk" name="BPMN Swimlane - Omnichannel Helpdesk">
-    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1850" pageHeight="1050" background="#ffffff" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="pool_1" value="PROSES BISNIS SISTEM HELPDESK &amp; OMNICHANNEL LIVE SUPPORT (CIHEUL TECHNOLOGIES)" style="swimlane;html=1;childLayout=stackLayout;resizeParent=1;resizeParentMax=0;startSize=40;horizontal=0;horizontalFlip=0;fillColor=#0f172a;strokeColor=#334155;fontColor=#f8fafc;fontStyle=1;fontSize=14;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
-          <mxGeometry x="40" y="40" width="1700" height="920" as="geometry"/>
+        <mxCell id="pool_1" value="PROSES BISNIS SISTEM HELPDESK &amp; OMNICHANNEL LIVE SUPPORT (CIHEUL TECHNOLOGIES)" style="swimlane;html=1;childLayout=stackLayout;resizeParent=1;resizeParentMax=0;startSize=40;horizontal=0;horizontalFlip=0;fillColor=#1e293b;strokeColor=#475569;strokeWidth=1.5;fontColor=#ffffff;fontStyle=1;fontSize=13;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="1760" height="920" as="geometry"/>
         </mxCell>
-        <mxCell id="lane_customer" value="Pelanggan (Customer / End-User)" style="swimlane;html=1;startSize=30;horizontal=0;fillColor=#1e293b;strokeColor=#334155;fontColor=#38bdf8;fontStyle=1;fontSize=12;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="pool_1">
-          <mxGeometry x="40" y="0" width="1660" height="210" as="geometry"/>
+        <mxCell id="lane_customer" value="Pelanggan (Customer / End-User)" style="swimlane;html=1;startSize=32;horizontal=0;fillColor=#ffffff;strokeColor=#cbd5e1;strokeWidth=1;fontColor=#0284c7;fontStyle=1;fontSize=11.5;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="pool_1">
+          <mxGeometry x="40" y="0" width="1720" height="210" as="geometry"/>
         </mxCell>
-        <mxCell id="lane_ai_bot" value="Sistem AI Helpdesk (Bot Assistant)" style="swimlane;html=1;startSize=30;horizontal=0;fillColor=#0f172a;strokeColor=#334155;fontColor=#38bdf8;fontStyle=1;fontSize=12;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="pool_1">
-          <mxGeometry x="40" y="210" width="1660" height="210" as="geometry"/>
+        <mxCell id="lane_ai_bot" value="Sistem AI Helpdesk (Bot Assistant)" style="swimlane;html=1;startSize=32;horizontal=0;fillColor=#f8fafc;strokeColor=#cbd5e1;strokeWidth=1;fontColor=#4f46e5;fontStyle=1;fontSize=11.5;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="pool_1">
+          <mxGeometry x="40" y="210" width="1720" height="210" as="geometry"/>
         </mxCell>
-        <mxCell id="lane_cs_agent" value="Customer Support (CS Agent - Web &amp; Mobile)" style="swimlane;html=1;startSize=30;horizontal=0;fillColor=#1e293b;strokeColor=#334155;fontColor=#38bdf8;fontStyle=1;fontSize=12;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="pool_1">
-          <mxGeometry x="40" y="420" width="1660" height="270" as="geometry"/>
+        <mxCell id="lane_cs_agent" value="Customer Support (CS Agent - Web &amp; Mobile)" style="swimlane;html=1;startSize=32;horizontal=0;fillColor=#ffffff;strokeColor=#cbd5e1;strokeWidth=1;fontColor=#0284c7;fontStyle=1;fontSize=11.5;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="pool_1">
+          <mxGeometry x="40" y="420" width="1720" height="270" as="geometry"/>
         </mxCell>
-        <mxCell id="lane_supervisor" value="Supervisor / Technical Lead (L2 Escalation)" style="swimlane;html=1;startSize=30;horizontal=0;fillColor=#0f172a;strokeColor=#334155;fontColor=#38bdf8;fontStyle=1;fontSize=12;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="pool_1">
-          <mxGeometry x="40" y="690" width="1660" height="190" as="geometry"/>
+        <mxCell id="lane_supervisor" value="Supervisor / Technical Lead (L2 Escalation)" style="swimlane;html=1;startSize=32;horizontal=0;fillColor=#f8fafc;strokeColor=#cbd5e1;strokeWidth=1;fontColor=#7c3aed;fontStyle=1;fontSize=11.5;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="pool_1">
+          <mxGeometry x="40" y="690" width="1720" height="190" as="geometry"/>
         </mxCell>
-        <mxCell id="n_start" value="Mulai: Kendala Terjadi" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#10b981;strokeColor=#059669;fontColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="120" y="115" width="50" height="50" as="geometry"/>
+        <mxCell id="n_start" value="Mulai:
+Kendala Terjadi" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dcfce7;strokeColor=#16a34a;strokeWidth=2;fontColor=#14532d;fontStyle=1;fontSize=11;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="120" y="115" width="52" height="52" as="geometry"/>
         </mxCell>
         <mxCell id="n_cust_open" value="Buka Live Chat Widget
-di Web &amp; Input Pesan" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#475569;strokeWidth=1.5;fontColor=#f8fafc;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="210" y="105" width="140" height="70" as="geometry"/>
+di Web &amp; Input Pesan" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f9ff;strokeColor=#0284c7;strokeWidth=1.5;fontColor=#0c4a6e;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="215" y="106" width="145" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_cust_eval" value="Terima Jawaban AI &amp;
-Coba Langkah Solusi" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#475569;strokeWidth=1.5;fontColor=#f8fafc;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="640" y="105" width="140" height="70" as="geometry"/>
+Coba Langkah Solusi" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f9ff;strokeColor=#0284c7;strokeWidth=1.5;fontColor=#0c4a6e;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="650" y="106" width="145" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_gw_cust_solved" value="Masalah
-Selesai?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f59e0b;strokeColor=#d97706;strokeWidth=2;fontColor=#1e293b;fontStyle=1;fontSize=10;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
-          <mxGeometry x="830" y="110" width="60" height="60" as="geometry"/>
+Selesai?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=2;fontColor=#78350f;fontStyle=1;fontSize=10;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="840" y="111" width="60" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="n_cust_rate_bot" value="Beri Rating Kepuasan
-(1-5 Bintang)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#475569;strokeWidth=1.5;fontColor=#f8fafc;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="940" y="105" width="140" height="70" as="geometry"/>
+(1-5 Bintang)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f9ff;strokeColor=#0284c7;strokeWidth=1.5;fontColor=#0c4a6e;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="945" y="106" width="145" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_end_bot" value="Selesai:
-Tiket Selesai (AI)" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ef4444;strokeColor=#b91c1c;strokeWidth=3;fontColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="1130" y="115" width="50" height="50" as="geometry"/>
+Tiket Selesai (AI)" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fee2e2;strokeColor=#dc2626;strokeWidth=2.5;fontColor=#7f1d1d;fontStyle=1;fontSize=11;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1135" y="115" width="52" height="52" as="geometry"/>
         </mxCell>
         <mxCell id="n_cust_escalate" value="Klik &quot;Hubungi CS&quot;
-/ Respon Tidak Membantu" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#475569;strokeWidth=1.5;fontColor=#f8fafc;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="890" y="190" width="150" height="50" as="geometry"/>
+/ Respon Tidak Membantu" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f9ff;strokeColor=#0284c7;strokeWidth=1.5;fontColor=#0c4a6e;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="895" y="190" width="155" height="50" as="geometry"/>
         </mxCell>
         <mxCell id="n_cust_chat_cs" value="Komunikasi Interaktif 1-on-1
-dengan CS Manusia" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#475569;strokeWidth=1.5;fontColor=#f8fafc;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="1260" y="105" width="150" height="70" as="geometry"/>
+dengan CS Manusia" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f9ff;strokeColor=#0284c7;strokeWidth=1.5;fontColor=#0c4a6e;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="106" width="155" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_cust_final_review" value="Konfirmasi Penyelesaian &amp;
-Beri Rating CS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#475569;strokeWidth=1.5;fontColor=#f8fafc;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="1530" y="105" width="140" height="70" as="geometry"/>
+Beri Rating Layanan" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f9ff;strokeColor=#0284c7;strokeWidth=1.5;fontColor=#0c4a6e;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="1545" y="106" width="145" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_end_human" value="Selesai:
-Tiket Selesai (CS)" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#ef4444;strokeColor=#b91c1c;strokeWidth=3;fontColor=#ffffff;fontStyle=1;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="1690" y="115" width="50" height="50" as="geometry"/>
+Tiket Selesai (CS)" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#fee2e2;strokeColor=#dc2626;strokeWidth=2.5;fontColor=#7f1d1d;fontStyle=1;fontSize=11;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1730" y="115" width="52" height="52" as="geometry"/>
         </mxCell>
         <mxCell id="n_bot_nlp" value="Inisialisasi Sesi Tiket &amp;
-Evaluasi Pesan (KB Match)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e1b4b;strokeColor=#6366f1;strokeWidth=1.5;fontColor=#e0e7ff;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="380" y="315" width="150" height="70" as="geometry"/>
+Evaluasi Pesan (KB Match)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2ff;strokeColor=#6366f1;strokeWidth=1.5;fontColor=#1e1b4b;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="390" y="315" width="155" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_gw_bot_conf" value="Confidence
-Score &gt;= 75%?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f59e0b;strokeColor=#d97706;strokeWidth=2;fontColor=#1e293b;fontStyle=1;fontSize=10;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
-          <mxGeometry x="560" y="320" width="60" height="60" as="geometry"/>
+Score &gt;= 75%?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=2;fontColor=#78350f;fontStyle=1;fontSize=10;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="580" y="320" width="60" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="n_bot_reply" value="Kirim Solusi Otomatis &amp;
-Opsi &quot;Bicara CS&quot;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e1b4b;strokeColor=#6366f1;strokeWidth=1.5;fontColor=#e0e7ff;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="640" y="315" width="140" height="70" as="geometry"/>
+Opsi &quot;Bicara CS&quot;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2ff;strokeColor=#6366f1;strokeWidth=1.5;fontColor=#1e1b4b;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="665" y="315" width="145" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_bot_escalate" value="Update Status: WAITING_AGENT
-Broadcast Sinyal WebSocket" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e1b4b;strokeColor=#6366f1;strokeWidth=1.5;fontColor=#e0e7ff;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="890" y="315" width="150" height="70" as="geometry"/>
+Broadcast Sinyal WebSocket" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2ff;strokeColor=#6366f1;strokeWidth=1.5;fontColor=#1e1b4b;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="895" y="315" width="155" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_cs_notif" value="Terima Notifikasi Tiket Baru
-di Web &amp; Flutter App" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#082f49;strokeColor=#0284c7;strokeWidth=1.5;fontColor=#e0f2fe;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="1080" y="535" width="150" height="70" as="geometry"/>
+di Web &amp; Flutter App" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#16a34a;strokeWidth=1.5;fontColor=#14532d;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="1090" y="535" width="155" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_cs_claim" value="Klaim Tiket (Claim Session)
-&amp; Nonaktifkan AI Bot" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#082f49;strokeColor=#0284c7;strokeWidth=1.5;fontColor=#e0f2fe;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="1260" y="535" width="150" height="70" as="geometry"/>
+&amp; Nonaktifkan AI Bot" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#16a34a;strokeWidth=1.5;fontColor=#14532d;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="535" width="155" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_cs_investigate" value="Analisis Chat Log AI &amp;
-Lakukan Troubleshooting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#082f49;strokeColor=#0284c7;strokeWidth=1.5;fontColor=#e0f2fe;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="1260" y="630" width="150" height="70" as="geometry"/>
+Lakukan Troubleshooting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#16a34a;strokeWidth=1.5;fontColor=#14532d;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="630" width="155" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_gw_cs_l2" value="Perlu Eskalasi
-Teknis L2?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f59e0b;strokeColor=#d97706;strokeWidth=2;fontColor=#1e293b;fontStyle=1;fontSize=10;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
-          <mxGeometry x="1445" y="635" width="60" height="60" as="geometry"/>
+Teknis L2?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=2;fontColor=#78350f;fontStyle=1;fontSize=10;fontFamily=Segoe UI,Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="635" width="60" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="n_cs_resolve" value="Terapkan Solusi &amp;
-Update Status RESOLVED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#082f49;strokeColor=#0284c7;strokeWidth=1.5;fontColor=#e0f2fe;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="1530" y="535" width="140" height="70" as="geometry"/>
+Update Status RESOLVED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#16a34a;strokeWidth=1.5;fontColor=#14532d;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="1545" y="535" width="145" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="n_sup_review" value="Review Log Server / Bug Code
-&amp; Berikan Panduan Resolusi" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#31104b;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="1390" y="800" width="170" height="70" as="geometry"/>
+&amp; Berikan Panduan Resolusi" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#faf5ff;strokeColor=#9333ea;strokeWidth=1.5;fontColor=#3b0764;fontSize=11;fontFamily=Segoe UI,Helvetica;shadow=0;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="800" width="175" height="70" as="geometry"/>
         </mxCell>
-        <mxCell id="e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_start" target="n_cust_open" parent="1">
+        <mxCell id="e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_start" target="n_cust_open" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cust_open" target="n_bot_nlp" parent="1">
+        <mxCell id="e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cust_open" target="n_bot_nlp" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="280" y="350"/>
+              <mxPoint x="287" y="350"/>
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_bot_nlp" target="n_gw_bot_conf" parent="1">
+        <mxCell id="e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_bot_nlp" target="n_gw_bot_conf" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e4" value="Ya (Tinggi)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_bot_conf" target="n_bot_reply" parent="1">
+        <mxCell id="e4" value="Ya (Tinggi)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_bot_conf" target="n_bot_reply" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e5" value="Tidak / Ambigu" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_bot_conf" target="n_bot_escalate" parent="1">
+        <mxCell id="e5" value="Tidak / Ambigu" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_bot_conf" target="n_bot_escalate" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="590" y="420"/>
-              <mxPoint x="965" y="420"/>
+              <mxPoint x="610" y="420"/>
+              <mxPoint x="972" y="420"/>
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_bot_reply" target="n_cust_eval" parent="1">
+        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_bot_reply" target="n_cust_eval" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cust_eval" target="n_gw_cust_solved" parent="1">
+        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cust_eval" target="n_gw_cust_solved" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e8" value="Ya" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_cust_solved" target="n_cust_rate_bot" parent="1">
+        <mxCell id="e8" value="Ya" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_cust_solved" target="n_cust_rate_bot" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cust_rate_bot" target="n_end_bot" parent="1">
+        <mxCell id="e9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cust_rate_bot" target="n_end_bot" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e10" value="Tidak" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_cust_solved" target="n_cust_escalate" parent="1">
+        <mxCell id="e10" value="Tidak" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_cust_solved" target="n_cust_escalate" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="860" y="215"/>
+              <mxPoint x="870" y="215"/>
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cust_escalate" target="n_bot_escalate" parent="1">
+        <mxCell id="e11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cust_escalate" target="n_bot_escalate" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_bot_escalate" target="n_cs_notif" parent="1">
+        <mxCell id="e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_bot_escalate" target="n_cs_notif" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1040" y="350"/>
-              <mxPoint x="1040" y="570"/>
+              <mxPoint x="1050" y="350"/>
+              <mxPoint x="1050" y="570"/>
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cs_notif" target="n_cs_claim" parent="1">
+        <mxCell id="e13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cs_notif" target="n_cs_claim" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cs_claim" target="n_cs_investigate" parent="1">
+        <mxCell id="e14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cs_claim" target="n_cs_investigate" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e15" value="Real-time WebSocket Sync" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cs_investigate" target="n_cust_chat_cs" parent="1">
+        <mxCell id="e15" value="Real-time WebSocket Sync" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cs_investigate" target="n_cust_chat_cs" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1335" y="200"/>
+              <mxPoint x="1347" y="200"/>
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cs_investigate" target="n_gw_cs_l2" parent="1">
+        <mxCell id="e16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cs_investigate" target="n_gw_cs_l2" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e17" value="Ya (Kompleks)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_cs_l2" target="n_sup_review" parent="1">
+        <mxCell id="e17" value="Ya (Kompleks)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_cs_l2" target="n_sup_review" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1475" y="835"/>
+              <mxPoint x="1490" y="835"/>
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e18" value="Solusi Disetujui" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_sup_review" target="n_cs_resolve" parent="1">
+        <mxCell id="e18" value="Solusi Disetujui" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_sup_review" target="n_cs_resolve" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1600" y="835"/>
+              <mxPoint x="1617" y="835"/>
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e19" value="Tidak (Teratasi)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_cs_l2" target="n_cs_resolve" parent="1">
+        <mxCell id="e19" value="Tidak (Teratasi)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_gw_cs_l2" target="n_cs_resolve" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1475" y="570"/>
+              <mxPoint x="1490" y="570"/>
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cs_resolve" target="n_cust_final_review" parent="1">
+        <mxCell id="e20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cs_resolve" target="n_cust_final_review" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#94a3b8;strokeWidth=2;fontColor=#e2e8f0;fontSize=10;labelBackgroundColor=#0f172a;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cust_final_review" target="n_end_human" parent="1">
+        <mxCell id="e21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=1.8;fontColor=#0f172a;fontSize=10;labelBackgroundColor=#ffffff;labelBorderColor=#cbd5e1;fontFamily=Segoe UI,Helvetica;" edge="1" source="n_cust_final_review" target="n_end_human" parent="1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
       </root>
